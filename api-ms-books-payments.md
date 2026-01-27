@@ -38,7 +38,6 @@
 - ✅ Eureka Discovery Client
 - ✅ Spring Boot Actuator
 - ✅ Lombok
-- ✅ Validation
 
 ---
 
@@ -53,8 +52,8 @@ src/main/java/com/relatosdepapel/payments/
 │   ├── PaymentService.java           ← Interface
 │   └── PaymentServiceImpl.java       ← Implementación
 ├── repository/
-│   ├── PaymentJpaRepository.java     ← Interface JPA (extends JpaRepository)
-│   └── PaymentRepository.java        ← Wrapper que usa PaymentJpaRepository
+│   ├── PaymentJpaRepository.java     ← Interface JPA
+│   └── PaymentRepository.java        ← Wrapper
 ├── entity/
 │   └── Payment.java
 ├── dto/
@@ -63,33 +62,32 @@ src/main/java/com/relatosdepapel/payments/
 │   ├── PaymentStatusDTO.java
 │   ├── BookAvailabilityDTO.java
 │   ├── StockUpdateDTO.java
-│   └── UserPaymentsResponseDTO.java
+│   ├── UserPaymentsResponseDTO.java
+│   └── ErrorResponseDTO.java
 ├── client/
 │   └── BookCatalogueClient.java
-├── config/
-│   └── RestTemplateConfig.java
-└── exception/
-    ├── GlobalExceptionHandler.java
-    ├── ResourceNotFoundException.java
-    └── PaymentException.java
+└── config/
+    └── RestTemplateConfig.java
 ```
+
+> ⚠️ **Nota:** No se usa `GlobalExceptionHandler`. El manejo de errores se hace con `ResponseEntity` en el Controller.
 
 ---
 
 ## 📦 Entidad: Payment
 
-| Atributo | Tipo | Validaciones | Descripción |
-|----------|------|--------------|-------------|
-| `id` | Long | Auto-generado | Identificador único |
-| `userId` | Long | NotNull, Positive | ID del usuario |
-| `bookId` | Long | NotNull, Positive | ID del libro |
-| `bookTitle` | String | - | Título (desnormalizado) |
-| `bookIsbn` | String | - | ISBN (desnormalizado) |
-| `quantity` | Integer | NotNull, Min 1 | Cantidad comprada |
-| `unitPrice` | BigDecimal | NotNull, Positive | Precio unitario |
-| `totalPrice` | BigDecimal | Calculado | quantity × unitPrice |
-| `purchaseDate` | LocalDateTime | Auto-generado | Fecha de compra |
-| `status` | String | NotNull | COMPLETED, CANCELLED |
+| Atributo | Tipo | Descripción |
+|----------|------|-------------|
+| `id` | Long | Identificador único (auto-generado) |
+| `userId` | Long | ID del usuario |
+| `bookId` | Long | ID del libro |
+| `bookTitle` | String | Título (desnormalizado) |
+| `bookIsbn` | String | ISBN (desnormalizado) |
+| `quantity` | Integer | Cantidad comprada |
+| `unitPrice` | BigDecimal | Precio unitario |
+| `totalPrice` | BigDecimal | quantity × unitPrice |
+| `purchaseDate` | LocalDateTime | Fecha de compra |
+| `status` | String | COMPLETED, CANCELLED |
 
 ---
 
@@ -97,12 +95,12 @@ src/main/java/com/relatosdepapel/payments/
 
 | Método HTTP | URI | Query Params | Request Body | Response Body | Códigos |
 |-------------|-----|--------------|--------------|---------------|---------|
-| POST | `/api/v1/payments` | N/A | PaymentRequestDTO | PaymentResponseDTO | 201, 400, 404, 409, 500 |
-| GET | `/api/v1/payments/{id}` | N/A | N/A | PaymentResponseDTO | 200, 404, 500 |
-| GET | `/api/v1/payments` | userId, bookId, status | N/A | List of PaymentResponseDTO | 200, 400, 500 |
-| GET | `/api/v1/users/{userId}/payments` | status | N/A | UserPaymentsResponseDTO | 200, 404, 500 |
-| PATCH | `/api/v1/payments/{id}` | N/A | PaymentStatusDTO | PaymentResponseDTO | 200, 400, 404, 500 |
-| DELETE | `/api/v1/payments/{id}` | N/A | N/A | Boolean | 200, 404, 409, 500 |
+| POST | `/api/v1/payments` | N/A | PaymentRequestDTO | PaymentResponseDTO | 201, 400, 404, 409 |
+| GET | `/api/v1/payments/{id}` | N/A | N/A | PaymentResponseDTO | 200, 404 |
+| GET | `/api/v1/payments` | userId, bookId, status | N/A | List | 200 |
+| GET | `/api/v1/users/{userId}/payments` | status | N/A | UserPaymentsResponseDTO | 200 |
+| PATCH | `/api/v1/payments/{id}` | N/A | PaymentStatusDTO | PaymentResponseDTO | 200, 400, 404 |
+| DELETE | `/api/v1/payments/{id}` | N/A | N/A | Boolean | 200, 404, 409 |
 
 ---
 
@@ -147,10 +145,29 @@ src/main/java/com/relatosdepapel/payments/
 }
 ```
 
-**Errores:**
-- 400 Bad Request: quantity < 1
-- 404 Not Found: Libro no existe
-- 409 Conflict: Stock insuficiente o libro no visible
+**Response 400 Bad Request:**
+```json
+{
+  "code": 400,
+  "message": "La cantidad debe ser al menos 1"
+}
+```
+
+**Response 404 Not Found:**
+```json
+{
+  "code": 404,
+  "message": "Libro no encontrado"
+}
+```
+
+**Response 409 Conflict:**
+```json
+{
+  "code": 409,
+  "message": "Stock insuficiente. Disponible: 5"
+}
+```
 
 ---
 
@@ -171,6 +188,8 @@ src/main/java/com/relatosdepapel/payments/
   "status": "COMPLETED"
 }
 ```
+
+**Response 404 Not Found:** (sin body)
 
 ---
 
@@ -235,24 +254,226 @@ src/main/java/com/relatosdepapel/payments/
 }
 ```
 
+**Response 200 OK:** PaymentResponseDTO actualizado
+
 **Lógica:** Si se cancela, restaurar stock en ms-books-catalogue.
 
 ---
 
 ### DELETE /api/v1/payments/{id} - Cancelar compra
 
-**Lógica:** Cambia estado a CANCELLED y restaura stock.
-
 **Response 200 OK:**
 ```json
 true
 ```
 
+**Response 404 Not Found:**
+```json
+false
+```
+
+**Response 409 Conflict:**
+```json
+{
+  "code": 409,
+  "message": "El pago ya está cancelado"
+}
+```
+
+**Lógica:** Cambia estado a CANCELLED y restaura stock.
+
 ---
 
-## 🛠️ Implementación - Capa Repository (2 capas)
+## 🛠️ Implementación
 
-### PaymentJpaRepository.java (Interface JPA)
+### Entity - Payment.java
+
+```java
+package com.relatosdepapel.payments.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "payments")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Payment {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private Long userId;
+
+    @Column(nullable = false)
+    private Long bookId;
+
+    private String bookTitle;
+
+    private String bookIsbn;
+
+    @Column(nullable = false)
+    private Integer quantity;
+
+    @Column(nullable = false)
+    private BigDecimal unitPrice;
+
+    @Column(nullable = false)
+    private BigDecimal totalPrice;
+
+    @Column(nullable = false)
+    private LocalDateTime purchaseDate;
+
+    @Column(nullable = false)
+    private String status;
+}
+```
+
+---
+
+### DTOs
+
+#### PaymentRequestDTO.java
+```java
+package com.relatosdepapel.payments.dto;
+
+import lombok.*;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class PaymentRequestDTO {
+    private Long userId;
+    private Long bookId;
+    private Integer quantity;
+}
+```
+
+#### PaymentResponseDTO.java
+```java
+package com.relatosdepapel.payments.dto;
+
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class PaymentResponseDTO {
+    private Long id;
+    private Long userId;
+    private Long bookId;
+    private String bookTitle;
+    private String bookIsbn;
+    private Integer quantity;
+    private BigDecimal unitPrice;
+    private BigDecimal totalPrice;
+    private LocalDateTime purchaseDate;
+    private String status;
+}
+```
+
+#### PaymentStatusDTO.java
+```java
+package com.relatosdepapel.payments.dto;
+
+import lombok.*;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class PaymentStatusDTO {
+    private String status;
+}
+```
+
+#### BookAvailabilityDTO.java
+```java
+package com.relatosdepapel.payments.dto;
+
+import lombok.*;
+import java.math.BigDecimal;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class BookAvailabilityDTO {
+    private Long id;
+    private String title;
+    private String isbn;
+    private Boolean available;
+    private Boolean visible;
+    private Integer stock;
+    private BigDecimal price;
+}
+```
+
+#### StockUpdateDTO.java
+```java
+package com.relatosdepapel.payments.dto;
+
+import lombok.*;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class StockUpdateDTO {
+    private Integer quantity;
+}
+```
+
+#### UserPaymentsResponseDTO.java
+```java
+package com.relatosdepapel.payments.dto;
+
+import lombok.*;
+import java.math.BigDecimal;
+import java.util.List;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserPaymentsResponseDTO {
+    private Long userId;
+    private List<PaymentResponseDTO> payments;
+    private Integer totalPayments;
+    private BigDecimal totalAmountSpent;
+}
+```
+
+#### ErrorResponseDTO.java
+```java
+package com.relatosdepapel.payments.dto;
+
+import lombok.*;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class ErrorResponseDTO {
+    private Integer code;
+    private String message;
+}
+```
+
+---
+
+### Repository - Capa 1: PaymentJpaRepository.java
 
 ```java
 package com.relatosdepapel.payments.repository;
@@ -261,22 +482,18 @@ import com.relatosdepapel.payments.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
-/**
- * Interface JPA con métodos de consulta personalizados
- */
 public interface PaymentJpaRepository extends JpaRepository<Payment, Long> {
     
     List<Payment> findByUserId(Long userId);
-    
     List<Payment> findByBookId(Long bookId);
-    
     List<Payment> findByStatus(String status);
-    
     List<Payment> findByUserIdAndStatus(Long userId, String status);
 }
 ```
 
-### PaymentRepository.java (Wrapper/Abstracción)
+---
+
+### Repository - Capa 2: PaymentRepository.java (Wrapper)
 
 ```java
 package com.relatosdepapel.payments.repository;
@@ -285,11 +502,7 @@ import com.relatosdepapel.payments.entity.Payment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import java.util.List;
-import java.util.Optional;
 
-/**
- * Clase wrapper que abstrae el acceso a JpaRepository
- */
 @Repository
 @RequiredArgsConstructor
 public class PaymentRepository {
@@ -300,8 +513,8 @@ public class PaymentRepository {
         return jpaRepository.findAll();
     }
 
-    public Optional<Payment> getById(Long id) {
-        return jpaRepository.findById(id);
+    public Payment getById(Long id) {
+        return jpaRepository.findById(id).orElse(null);
     }
 
     public Payment save(Payment payment) {
@@ -332,9 +545,87 @@ public class PaymentRepository {
 
 ---
 
-## 🛠️ Implementación - Capa Service (2 capas)
+### Config - RestTemplateConfig.java
 
-### PaymentService.java (Interface)
+```java
+package com.relatosdepapel.payments.config;
+
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+
+@Configuration
+public class RestTemplateConfig {
+
+    @Bean
+    @LoadBalanced  // Habilita resolución de nombres Eureka
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+}
+```
+
+---
+
+### Client - BookCatalogueClient.java
+
+```java
+package com.relatosdepapel.payments.client;
+
+import com.relatosdepapel.payments.dto.BookAvailabilityDTO;
+import com.relatosdepapel.payments.dto.StockUpdateDTO;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
+
+@Component
+@RequiredArgsConstructor
+public class BookCatalogueClient {
+
+    private final RestTemplate restTemplate;
+    
+    // ⚠️ CRÍTICO: Usar nombre de servicio Eureka, NO IP ni puerto
+    private static final String CATALOGUE_SERVICE_URL = "http://ms-books-catalogue";
+
+    /**
+     * Verifica disponibilidad de un libro
+     * @return BookAvailabilityDTO o null si no existe
+     */
+    public BookAvailabilityDTO checkAvailability(Long bookId) {
+        String url = CATALOGUE_SERVICE_URL + "/api/v1/books/" + bookId + "/availability";
+        
+        try {
+            return restTemplate.getForObject(url, BookAvailabilityDTO.class);
+        } catch (HttpClientErrorException.NotFound e) {
+            return null; // Libro no encontrado
+        }
+    }
+
+    /**
+     * Decrementa el stock de un libro
+     */
+    public void decrementStock(Long bookId, Integer quantity) {
+        String url = CATALOGUE_SERVICE_URL + "/api/v1/books/" + bookId + "/stock";
+        StockUpdateDTO request = new StockUpdateDTO(-quantity);
+        restTemplate.patchForObject(url, request, Void.class);
+    }
+
+    /**
+     * Restaura el stock de un libro (cuando se cancela compra)
+     */
+    public void restoreStock(Long bookId, Integer quantity) {
+        String url = CATALOGUE_SERVICE_URL + "/api/v1/books/" + bookId + "/stock";
+        StockUpdateDTO request = new StockUpdateDTO(quantity);
+        restTemplate.patchForObject(url, request, Void.class);
+    }
+}
+```
+
+---
+
+### Service - Capa 1: PaymentService.java (Interface)
 
 ```java
 package com.relatosdepapel.payments.service;
@@ -342,48 +633,38 @@ package com.relatosdepapel.payments.service;
 import com.relatosdepapel.payments.dto.*;
 import java.util.List;
 
-/**
- * Interface que define el contrato del servicio de pagos
- */
 public interface PaymentService {
     
-    // GET /payments
     List<PaymentResponseDTO> getAll();
     
-    // GET /payments/{id}
     PaymentResponseDTO getById(Long id);
     
-    // GET /payments con filtros
     List<PaymentResponseDTO> search(Long userId, Long bookId, String status);
     
-    // GET /users/{userId}/payments
     UserPaymentsResponseDTO getByUserId(Long userId, String status);
     
-    // POST /payments
-    PaymentResponseDTO create(PaymentRequestDTO dto);
+    PaymentResponseDTO create(PaymentRequestDTO dto, BookAvailabilityDTO book);
     
-    // PATCH /payments/{id}
-    PaymentResponseDTO updateStatus(Long id, PaymentStatusDTO dto);
+    PaymentResponseDTO updateStatus(Long id, String status);
     
-    // DELETE /payments/{id}
     Boolean cancel(Long id);
+    
+    Payment getEntityById(Long id);
 }
 ```
 
-### PaymentServiceImpl.java (Implementación)
+---
+
+### Service - Capa 2: PaymentServiceImpl.java (Implementación)
 
 ```java
 package com.relatosdepapel.payments.service;
 
-import com.relatosdepapel.payments.client.BookCatalogueClient;
 import com.relatosdepapel.payments.dto.*;
 import com.relatosdepapel.payments.entity.Payment;
-import com.relatosdepapel.payments.exception.PaymentException;
-import com.relatosdepapel.payments.exception.ResourceNotFoundException;
 import com.relatosdepapel.payments.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -392,11 +673,9 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository repository;
-    private final BookCatalogueClient catalogueClient;
 
     @Override
     public List<PaymentResponseDTO> getAll() {
@@ -407,9 +686,16 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentResponseDTO getById(Long id) {
-        Payment payment = repository.getById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment not found: " + id));
+        Payment payment = repository.getById(id);
+        if (payment == null) {
+            return null;
+        }
         return toResponseDTO(payment);
+    }
+    
+    @Override
+    public Payment getEntityById(Long id) {
+        return repository.getById(id);
     }
 
     @Override
@@ -461,70 +747,45 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentResponseDTO create(PaymentRequestDTO dto) {
-        // 1. Validar libro en catalogue (usando nombre Eureka, NO IP)
-        BookAvailabilityDTO book = catalogueClient.checkAvailability(dto.getBookId());
-        
-        // 2. Verificar visibilidad
-        if (!book.getVisible()) {
-            throw new PaymentException("Book is not available for purchase");
-        }
-        
-        // 3. Verificar stock
-        if (book.getStock() < dto.getQuantity()) {
-            throw new PaymentException("Insufficient stock. Available: " + book.getStock());
-        }
-        
-        // 4. Decrementar stock en catalogue
-        catalogueClient.decrementStock(dto.getBookId(), dto.getQuantity());
-        
-        // 5. Crear registro de pago
-        Payment payment = new Payment();
-        payment.setUserId(dto.getUserId());
-        payment.setBookId(dto.getBookId());
-        payment.setBookTitle(book.getTitle());
-        payment.setBookIsbn(book.getIsbn());
-        payment.setQuantity(dto.getQuantity());
-        payment.setUnitPrice(book.getPrice());
-        payment.setTotalPrice(book.getPrice().multiply(BigDecimal.valueOf(dto.getQuantity())));
-        payment.setPurchaseDate(LocalDateTime.now());
-        payment.setStatus("COMPLETED");
+    public PaymentResponseDTO create(PaymentRequestDTO dto, BookAvailabilityDTO book) {
+        Payment payment = Payment.builder()
+            .userId(dto.getUserId())
+            .bookId(dto.getBookId())
+            .bookTitle(book.getTitle())
+            .bookIsbn(book.getIsbn())
+            .quantity(dto.getQuantity())
+            .unitPrice(book.getPrice())
+            .totalPrice(book.getPrice().multiply(BigDecimal.valueOf(dto.getQuantity())))
+            .purchaseDate(LocalDateTime.now())
+            .status("COMPLETED")
+            .build();
         
         Payment saved = repository.save(payment);
         return toResponseDTO(saved);
     }
 
     @Override
-    public PaymentResponseDTO updateStatus(Long id, PaymentStatusDTO dto) {
-        Payment payment = repository.getById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment not found: " + id));
-        
-        // Si se cancela, restaurar stock
-        if ("CANCELLED".equals(dto.getStatus()) && !"CANCELLED".equals(payment.getStatus())) {
-            catalogueClient.restoreStock(payment.getBookId(), payment.getQuantity());
+    public PaymentResponseDTO updateStatus(Long id, String status) {
+        Payment payment = repository.getById(id);
+        if (payment == null) {
+            return null;
         }
         
-        payment.setStatus(dto.getStatus());
+        payment.setStatus(status);
         Payment saved = repository.save(payment);
         return toResponseDTO(saved);
     }
 
     @Override
     public Boolean cancel(Long id) {
-        return repository.getById(id)
-                .map(payment -> {
-                    if ("CANCELLED".equals(payment.getStatus())) {
-                        throw new PaymentException("Payment already cancelled");
-                    }
-                    
-                    // Restaurar stock
-                    catalogueClient.restoreStock(payment.getBookId(), payment.getQuantity());
-                    
-                    payment.setStatus("CANCELLED");
-                    repository.save(payment);
-                    return true;
-                })
-                .orElse(false);
+        Payment payment = repository.getById(id);
+        if (payment == null) {
+            return false;
+        }
+        
+        payment.setStatus("CANCELLED");
+        repository.save(payment);
+        return true;
     }
 
     // ========== MÉTODOS DE CONVERSIÓN ==========
@@ -548,71 +809,155 @@ public class PaymentServiceImpl implements PaymentService {
 
 ---
 
-## 🔄 Cliente para ms-books-catalogue
-
-### RestTemplateConfig.java
+### Controller - PaymentController.java (con ResponseEntity)
 
 ```java
-package com.relatosdepapel.payments.config;
+package com.relatosdepapel.payments.controller;
 
-import org.springframework.cloud.client.loadbalancer.LoadBalanced;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.client.RestTemplate;
-
-@Configuration
-public class RestTemplateConfig {
-
-    @Bean
-    @LoadBalanced  // Habilita resolución de nombres Eureka
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
-}
-```
-
-### BookCatalogueClient.java
-
-```java
-package com.relatosdepapel.payments.client;
-
-import com.relatosdepapel.payments.dto.BookAvailabilityDTO;
-import com.relatosdepapel.payments.dto.StockUpdateDTO;
-import com.relatosdepapel.payments.exception.ResourceNotFoundException;
+import com.relatosdepapel.payments.client.BookCatalogueClient;
+import com.relatosdepapel.payments.dto.*;
+import com.relatosdepapel.payments.entity.Payment;
+import com.relatosdepapel.payments.service.PaymentService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-@Component
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
-public class BookCatalogueClient {
+public class PaymentController {
 
-    private final RestTemplate restTemplate;
-    
-    // ⚠️ CRÍTICO: Usar nombre de servicio Eureka, NO IP ni puerto
-    private static final String CATALOGUE_SERVICE_URL = "http://ms-books-catalogue";
+    private final PaymentService service;
+    private final BookCatalogueClient catalogueClient;
 
-    public BookAvailabilityDTO checkAvailability(Long bookId) {
-        String url = CATALOGUE_SERVICE_URL + "/api/v1/books/" + bookId + "/availability";
+    // GET /api/v1/payments
+    @GetMapping("/payments")
+    public ResponseEntity<List<PaymentResponseDTO>> getAll(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) Long bookId,
+            @RequestParam(required = false) String status) {
         
-        try {
-            return restTemplate.getForObject(url, BookAvailabilityDTO.class);
-        } catch (HttpClientErrorException.NotFound e) {
-            throw new ResourceNotFoundException("Book not found: " + bookId);
+        if (userId == null && bookId == null && status == null) {
+            return ResponseEntity.ok(service.getAll()); // 200
         }
+        
+        return ResponseEntity.ok(service.search(userId, bookId, status)); // 200
     }
 
-    public void decrementStock(Long bookId, Integer quantity) {
-        String url = CATALOGUE_SERVICE_URL + "/api/v1/books/" + bookId + "/stock";
-        StockUpdateDTO request = new StockUpdateDTO(-quantity);
-        restTemplate.patchForObject(url, request, Void.class);
+    // GET /api/v1/payments/{id}
+    @GetMapping("/payments/{id}")
+    public ResponseEntity<PaymentResponseDTO> getById(@PathVariable Long id) {
+        PaymentResponseDTO payment = service.getById(id);
+        if (payment == null) {
+            return ResponseEntity.notFound().build(); // 404
+        }
+        return ResponseEntity.ok(payment); // 200
     }
 
-    public void restoreStock(Long bookId, Integer quantity) {
-        String url = CATALOGUE_SERVICE_URL + "/api/v1/books/" + bookId + "/stock";
-        StockUpdateDTO request = new StockUpdateDTO(quantity);
-        restTemplate.patchForObject(url, request, Void.class);
+    // GET /api/v1/users/{userId}/payments
+    @GetMapping("/users/{userId}/payments")
+    public ResponseEntity<UserPaymentsResponseDTO> getByUserId(
+            @PathVariable Long userId,
+            @RequestParam(required = false) String status) {
+        
+        return ResponseEntity.ok(service.getByUserId(userId, status)); // 200
+    }
+
+    // POST /api/v1/payments
+    @PostMapping("/payments")
+    public ResponseEntity<?> create(@RequestBody PaymentRequestDTO dto) {
+        // Validación: userId no null
+        if (dto.getUserId() == null) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "El userId no puede ser nulo")); // 400
+        }
+        // Validación: bookId no null
+        if (dto.getBookId() == null) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "El bookId no puede ser nulo")); // 400
+        }
+        // Validación: quantity >= 1
+        if (dto.getQuantity() == null || dto.getQuantity() < 1) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "La cantidad debe ser al menos 1")); // 400
+        }
+        
+        // Verificar libro en catalogue (usando nombre Eureka)
+        BookAvailabilityDTO book = catalogueClient.checkAvailability(dto.getBookId());
+        
+        // Validación: libro existe
+        if (book == null) {
+            return ResponseEntity.status(404)
+                .body(new ErrorResponseDTO(404, "Libro no encontrado")); // 404
+        }
+        
+        // Validación: libro visible
+        if (!book.getVisible()) {
+            return ResponseEntity.status(409)
+                .body(new ErrorResponseDTO(409, "El libro no está disponible para compra")); // 409
+        }
+        
+        // Validación: stock suficiente
+        if (book.getStock() < dto.getQuantity()) {
+            return ResponseEntity.status(409)
+                .body(new ErrorResponseDTO(409, "Stock insuficiente. Disponible: " + book.getStock())); // 409
+        }
+        
+        // Decrementar stock en catalogue
+        catalogueClient.decrementStock(dto.getBookId(), dto.getQuantity());
+        
+        // Crear el pago
+        PaymentResponseDTO created = service.create(dto, book);
+        return ResponseEntity.status(201).body(created); // 201
+    }
+
+    // PATCH /api/v1/payments/{id}
+    @PatchMapping("/payments/{id}")
+    public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestBody PaymentStatusDTO dto) {
+        // Validación: status no vacío
+        if (dto.getStatus() == null || dto.getStatus().isEmpty()) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "El status no puede estar vacío")); // 400
+        }
+        
+        // Verificar que existe
+        Payment payment = service.getEntityById(id);
+        if (payment == null) {
+            return ResponseEntity.notFound().build(); // 404
+        }
+        
+        // Si se cancela y no estaba cancelado, restaurar stock
+        if ("CANCELLED".equals(dto.getStatus()) && !"CANCELLED".equals(payment.getStatus())) {
+            catalogueClient.restoreStock(payment.getBookId(), payment.getQuantity());
+        }
+        
+        PaymentResponseDTO updated = service.updateStatus(id, dto.getStatus());
+        return ResponseEntity.ok(updated); // 200
+    }
+
+    // DELETE /api/v1/payments/{id}
+    @DeleteMapping("/payments/{id}")
+    public ResponseEntity<?> cancel(@PathVariable Long id) {
+        // Verificar que existe
+        Payment payment = service.getEntityById(id);
+        if (payment == null) {
+            return ResponseEntity.notFound().build(); // 404
+        }
+        
+        // Verificar que no está ya cancelado
+        if ("CANCELLED".equals(payment.getStatus())) {
+            return ResponseEntity.status(409)
+                .body(new ErrorResponseDTO(409, "El pago ya está cancelado")); // 409
+        }
+        
+        // Restaurar stock en catalogue
+        catalogueClient.restoreStock(payment.getBookId(), payment.getQuantity());
+        
+        // Cancelar el pago
+        service.cancel(id);
+        return ResponseEntity.ok(true); // 200
     }
 }
 ```
@@ -630,7 +975,7 @@ spring:
     name: ms-books-payments
   
   datasource:
-    url: jdbc:h2:mem:payments_db  # BD DIFERENTE a catalogue
+    url: jdbc:h2:mem:payments_db
     driver-class-name: org.h2.Driver
     username: sa
     password: 
@@ -660,7 +1005,7 @@ eureka:
 ## 🧪 data.sql
 
 ```sql
-INSERT INTO payment (user_id, book_id, book_title, book_isbn, quantity, unit_price, total_price, purchase_date, status) VALUES
+INSERT INTO payments (user_id, book_id, book_title, book_isbn, quantity, unit_price, total_price, purchase_date, status) VALUES
 (1, 1, 'El Quijote', '9788467033601', 2, 19.99, 39.98, '2024-01-10 10:30:00', 'COMPLETED'),
 (1, 2, 'Cien años de soledad', '9788437604947', 1, 24.99, 24.99, '2024-01-12 14:20:00', 'COMPLETED'),
 (2, 3, '1984', '9788423342150', 3, 15.99, 47.97, '2024-01-15 09:00:00', 'COMPLETED');
@@ -685,5 +1030,6 @@ INSERT INTO payment (user_id, book_id, book_title, book_isbn, quantity, unit_pri
 - [ ] Restaurar stock al cancelar
 - [ ] **2 capas Repository:** PaymentJpaRepository + PaymentRepository
 - [ ] **2 capas Service:** PaymentService + PaymentServiceImpl
+- [ ] **Manejo de errores con ResponseEntity** (sin GlobalExceptionHandler)
 - [ ] Base de datos DIFERENTE a catalogue_db
 - [ ] Registro automático en Eureka

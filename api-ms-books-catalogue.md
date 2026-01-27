@@ -37,7 +37,6 @@
 - ✅ Eureka Discovery Client
 - ✅ Spring Boot Actuator
 - ✅ Lombok
-- ✅ Validation
 
 ---
 
@@ -52,37 +51,37 @@ src/main/java/com/relatosdepapel/catalogue/
 │   ├── BookService.java              ← Interface
 │   └── BookServiceImpl.java          ← Implementación
 ├── repository/
-│   ├── BookJpaRepository.java        ← Interface JPA (extends JpaRepository)
-│   └── BookRepository.java           ← Wrapper que usa BookJpaRepository
+│   ├── BookJpaRepository.java        ← Interface JPA
+│   └── BookRepository.java           ← Wrapper
 ├── entity/
 │   └── Book.java
-├── dto/
-│   ├── BookRequestDTO.java
-│   ├── BookResponseDTO.java
-│   ├── BookPatchDTO.java
-│   ├── AvailabilityResponseDTO.java
-│   └── StockUpdateDTO.java
-└── exception/
-    ├── GlobalExceptionHandler.java
-    └── ResourceNotFoundException.java
+└── dto/
+    ├── BookRequestDTO.java
+    ├── BookResponseDTO.java
+    ├── BookPatchDTO.java
+    ├── AvailabilityResponseDTO.java
+    ├── StockUpdateDTO.java
+    └── ErrorResponseDTO.java
 ```
+
+> ⚠️ **Nota:** No se usa `GlobalExceptionHandler`. El manejo de errores se hace con `ResponseEntity` en el Controller.
 
 ---
 
 ## 📦 Entidad: Book
 
-| Atributo | Tipo | Validaciones | Descripción |
-|----------|------|--------------|-------------|
-| `id` | Long | Auto-generado | Identificador único |
-| `title` | String | NotBlank, max 255 | Título del libro |
-| `author` | String | NotBlank, max 255 | Autor del libro |
-| `publicationDate` | LocalDate | PastOrPresent | Fecha de publicación |
-| `category` | String | NotBlank | Categoría/Género |
-| `isbn` | String | NotBlank, unique | Código ISBN |
-| `rating` | Integer | Min 1, Max 5 | Valoración (1-5) |
-| `visible` | Boolean | NotNull | Visibilidad en frontend |
-| `stock` | Integer | Min 0 | Cantidad disponible |
-| `price` | BigDecimal | Positive | Precio del libro |
+| Atributo | Tipo | Descripción |
+|----------|------|-------------|
+| `id` | Long | Identificador único (auto-generado) |
+| `title` | String | Título del libro |
+| `author` | String | Autor del libro |
+| `publicationDate` | LocalDate | Fecha de publicación |
+| `category` | String | Categoría/Género |
+| `isbn` | String | Código ISBN (único) |
+| `rating` | Integer | Valoración (1-5) |
+| `visible` | Boolean | Visibilidad en frontend |
+| `stock` | Integer | Cantidad disponible |
+| `price` | BigDecimal | Precio del libro |
 
 ---
 
@@ -90,14 +89,14 @@ src/main/java/com/relatosdepapel/catalogue/
 
 | Método HTTP | URI | Query Params | Request Body | Response Body | Códigos |
 |-------------|-----|--------------|--------------|---------------|---------|
-| POST | `/api/v1/books` | N/A | BookRequestDTO | BookResponseDTO | 201, 400, 500 |
-| GET | `/api/v1/books/{id}` | N/A | N/A | BookResponseDTO | 200, 404, 500 |
-| GET | `/api/v1/books` | title, author, category, isbn, ratingMin, ratingMax, visible, minPrice, maxPrice, minStock, publicationDateFrom, publicationDateTo | N/A | List of BookResponseDTO | 200, 400, 500 |
-| PUT | `/api/v1/books/{id}` | N/A | BookRequestDTO | BookResponseDTO | 200, 400, 404, 500 |
-| PATCH | `/api/v1/books/{id}` | N/A | BookPatchDTO | BookResponseDTO | 200, 400, 404, 500 |
-| DELETE | `/api/v1/books/{id}` | N/A | N/A | Boolean | 200, 404, 500 |
-| GET | `/api/v1/books/{id}/availability` | N/A | N/A | AvailabilityResponseDTO | 200, 404, 500 |
-| PATCH | `/api/v1/books/{id}/stock` | N/A | StockUpdateDTO | BookResponseDTO | 200, 400, 404, 500 |
+| POST | `/api/v1/books` | N/A | BookRequestDTO | BookResponseDTO | 201, 400 |
+| GET | `/api/v1/books/{id}` | N/A | N/A | BookResponseDTO | 200, 404 |
+| GET | `/api/v1/books` | title, author, category, isbn, ratingMin, ratingMax, visible, minPrice, maxPrice, minStock, publicationDateFrom, publicationDateTo | N/A | List | 200 |
+| PUT | `/api/v1/books/{id}` | N/A | BookRequestDTO | BookResponseDTO | 200, 400, 404 |
+| PATCH | `/api/v1/books/{id}` | N/A | BookPatchDTO | BookResponseDTO | 200, 400, 404 |
+| DELETE | `/api/v1/books/{id}` | N/A | N/A | Boolean | 200, 404 |
+| GET | `/api/v1/books/{id}/availability` | N/A | N/A | AvailabilityResponseDTO | 200, 404 |
+| PATCH | `/api/v1/books/{id}/stock` | N/A | StockUpdateDTO | BookResponseDTO | 200, 400, 404 |
 
 ---
 
@@ -136,6 +135,14 @@ src/main/java/com/relatosdepapel/catalogue/
 }
 ```
 
+**Response 400 Bad Request (ErrorResponseDTO):**
+```json
+{
+  "code": 400,
+  "message": "El título no puede estar vacío"
+}
+```
+
 ---
 
 ### GET /api/v1/books/{id} - Obtener libro por ID
@@ -155,6 +162,8 @@ src/main/java/com/relatosdepapel/catalogue/
   "price": 19.99
 }
 ```
+
+**Response 404 Not Found:** (sin body)
 
 ---
 
@@ -216,6 +225,10 @@ GET /api/v1/books?minPrice=10&maxPrice=30&minStock=5
 
 **Request Body:** Igual que POST (todos los campos)
 
+**Response 200 OK:** BookResponseDTO actualizado
+
+**Response 404 Not Found:** (sin body)
+
 ---
 
 ### PATCH /api/v1/books/{id} - Actualizar libro parcial
@@ -228,6 +241,8 @@ GET /api/v1/books?minPrice=10&maxPrice=30&minStock=5
 }
 ```
 
+**Response 200 OK:** BookResponseDTO actualizado
+
 ---
 
 ### DELETE /api/v1/books/{id} - Eliminar libro
@@ -235,6 +250,11 @@ GET /api/v1/books?minPrice=10&maxPrice=30&minStock=5
 **Response 200 OK:**
 ```json
 true
+```
+
+**Response 404 Not Found:**
+```json
+false
 ```
 
 ---
@@ -256,6 +276,8 @@ true
 }
 ```
 
+**Response 404 Not Found:** (sin body)
+
 ---
 
 ### PATCH /api/v1/books/{id}/stock - Actualizar stock
@@ -269,13 +291,204 @@ true
 }
 ```
 
-**Response 200 OK (BookResponseDTO):** Libro con stock actualizado
+**Response 200 OK:** BookResponseDTO con stock actualizado
+
+**Response 400 Bad Request:**
+```json
+{
+  "code": 400,
+  "message": "Stock insuficiente"
+}
+```
 
 ---
 
-## 🛠️ Implementación - Capa Repository (2 capas)
+## 🛠️ Implementación
 
-### BookJpaRepository.java (Interface JPA)
+### Entity - Book.java
+
+```java
+package com.relatosdepapel.catalogue.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "books")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Book {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false)
+    private String author;
+
+    private LocalDate publicationDate;
+
+    private String category;
+
+    @Column(unique = true, nullable = false)
+    private String isbn;
+
+    private Integer rating;
+
+    @Column(nullable = false)
+    private Boolean visible;
+
+    @Column(nullable = false)
+    private Integer stock;
+
+    @Column(nullable = false)
+    private BigDecimal price;
+}
+```
+
+---
+
+### DTOs
+
+#### BookRequestDTO.java
+```java
+package com.relatosdepapel.catalogue.dto;
+
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class BookRequestDTO {
+    private String title;
+    private String author;
+    private LocalDate publicationDate;
+    private String category;
+    private String isbn;
+    private Integer rating;
+    private Boolean visible;
+    private Integer stock;
+    private BigDecimal price;
+}
+```
+
+#### BookResponseDTO.java
+```java
+package com.relatosdepapel.catalogue.dto;
+
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class BookResponseDTO {
+    private Long id;
+    private String title;
+    private String author;
+    private LocalDate publicationDate;
+    private String category;
+    private String isbn;
+    private Integer rating;
+    private Boolean visible;
+    private Integer stock;
+    private BigDecimal price;
+}
+```
+
+#### BookPatchDTO.java
+```java
+package com.relatosdepapel.catalogue.dto;
+
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class BookPatchDTO {
+    private String title;
+    private String author;
+    private LocalDate publicationDate;
+    private String category;
+    private Integer rating;
+    private Boolean visible;
+    private Integer stock;
+    private BigDecimal price;
+}
+```
+
+#### AvailabilityResponseDTO.java
+```java
+package com.relatosdepapel.catalogue.dto;
+
+import lombok.*;
+import java.math.BigDecimal;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class AvailabilityResponseDTO {
+    private Long id;
+    private String title;
+    private String isbn;
+    private Boolean available;
+    private Boolean visible;
+    private Integer stock;
+    private BigDecimal price;
+}
+```
+
+#### StockUpdateDTO.java
+```java
+package com.relatosdepapel.catalogue.dto;
+
+import lombok.*;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class StockUpdateDTO {
+    private Integer quantity;
+}
+```
+
+#### ErrorResponseDTO.java
+```java
+package com.relatosdepapel.catalogue.dto;
+
+import lombok.*;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class ErrorResponseDTO {
+    private Integer code;
+    private String message;
+}
+```
+
+---
+
+### Repository - Capa 1: BookJpaRepository.java
 
 ```java
 package com.relatosdepapel.catalogue.repository;
@@ -285,27 +498,21 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import java.util.List;
 
-/**
- * Interface JPA con métodos de consulta personalizados
- */
 public interface BookJpaRepository extends JpaRepository<Book, Long>, 
                                            JpaSpecificationExecutor<Book> {
     
     List<Book> findByTitleContainingIgnoreCase(String title);
-    
     List<Book> findByAuthorContainingIgnoreCase(String author);
-    
     List<Book> findByCategory(String category);
-    
     List<Book> findByIsbn(String isbn);
-    
     List<Book> findByVisibleTrue();
-    
     boolean existsByIsbn(String isbn);
 }
 ```
 
-### BookRepository.java (Wrapper/Abstracción)
+---
+
+### Repository - Capa 2: BookRepository.java (Wrapper)
 
 ```java
 package com.relatosdepapel.catalogue.repository;
@@ -315,11 +522,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 import java.util.List;
-import java.util.Optional;
 
-/**
- * Clase wrapper que abstrae el acceso a JpaRepository
- */
 @Repository
 @RequiredArgsConstructor
 public class BookRepository {
@@ -330,8 +533,8 @@ public class BookRepository {
         return jpaRepository.findAll();
     }
 
-    public Optional<Book> getById(Long id) {
-        return jpaRepository.findById(id);
+    public Book getById(Long id) {
+        return jpaRepository.findById(id).orElse(null);
     }
 
     public Book save(Book book) {
@@ -357,12 +560,7 @@ public class BookRepository {
     public List<Book> findByCategory(String category) {
         return jpaRepository.findByCategory(category);
     }
-    
-    public List<Book> findByVisibleTrue() {
-        return jpaRepository.findByVisibleTrue();
-    }
 
-    // Búsqueda con Specifications (para filtros combinados)
     public List<Book> search(Specification<Book> spec) {
         return jpaRepository.findAll(spec);
     }
@@ -371,9 +569,7 @@ public class BookRepository {
 
 ---
 
-## 🛠️ Implementación - Capa Service (2 capas)
-
-### BookService.java (Interface)
+### Service - Capa 1: BookService.java (Interface)
 
 ```java
 package com.relatosdepapel.catalogue.service;
@@ -383,76 +579,56 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Interface que define el contrato del servicio de libros
- */
 public interface BookService {
     
-    // GET /books
     List<BookResponseDTO> getAll();
     
-    // GET /books/{id}
     BookResponseDTO getById(Long id);
     
-    // GET /books con filtros
     List<BookResponseDTO> search(
-        String title,
-        String author,
-        String category,
-        String isbn,
-        Integer ratingMin,
-        Integer ratingMax,
-        Boolean visible,
-        BigDecimal minPrice,
-        BigDecimal maxPrice,
-        Integer minStock,
-        LocalDate publicationDateFrom,
-        LocalDate publicationDateTo
+        String title, String author, String category, String isbn,
+        Integer ratingMin, Integer ratingMax, Boolean visible,
+        BigDecimal minPrice, BigDecimal maxPrice, Integer minStock,
+        LocalDate publicationDateFrom, LocalDate publicationDateTo
     );
     
-    // POST /books
     BookResponseDTO create(BookRequestDTO dto);
     
-    // PUT /books/{id}
     BookResponseDTO update(Long id, BookRequestDTO dto);
     
-    // PATCH /books/{id}
     BookResponseDTO partialUpdate(Long id, BookPatchDTO dto);
     
-    // DELETE /books/{id}
     Boolean delete(Long id);
     
-    // GET /books/{id}/availability
     AvailabilityResponseDTO checkAvailability(Long id);
     
-    // PATCH /books/{id}/stock
-    BookResponseDTO updateStock(Long id, StockUpdateDTO dto);
+    BookResponseDTO updateStock(Long id, Integer quantity);
 }
 ```
 
-### BookServiceImpl.java (Implementación)
+---
+
+### Service - Capa 2: BookServiceImpl.java (Implementación)
 
 ```java
 package com.relatosdepapel.catalogue.service;
 
 import com.relatosdepapel.catalogue.dto.*;
 import com.relatosdepapel.catalogue.entity.Book;
-import com.relatosdepapel.catalogue.exception.ResourceNotFoundException;
 import com.relatosdepapel.catalogue.repository.BookRepository;
-import com.relatosdepapel.catalogue.specification.BookSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.criteria.Predicate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class BookServiceImpl implements BookService {
 
     private final BookRepository repository;
@@ -466,8 +642,10 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public BookResponseDTO getById(Long id) {
-        Book book = repository.getById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found: " + id));
+        Book book = repository.getById(id);
+        if (book == null) {
+            return null;
+        }
         return toResponseDTO(book);
     }
 
@@ -478,11 +656,50 @@ public class BookServiceImpl implements BookService {
             BigDecimal minPrice, BigDecimal maxPrice, Integer minStock,
             LocalDate publicationDateFrom, LocalDate publicationDateTo) {
         
-        Specification<Book> spec = BookSpecification.withFilters(
-            title, author, category, isbn, ratingMin, ratingMax, 
-            visible, minPrice, maxPrice, minStock, 
-            publicationDateFrom, publicationDateTo
-        );
+        Specification<Book> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            
+            if (title != null && !title.isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("title")), 
+                    "%" + title.toLowerCase() + "%"));
+            }
+            if (author != null && !author.isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("author")), 
+                    "%" + author.toLowerCase() + "%"));
+            }
+            if (category != null && !category.isEmpty()) {
+                predicates.add(cb.equal(root.get("category"), category));
+            }
+            if (isbn != null && !isbn.isEmpty()) {
+                predicates.add(cb.equal(root.get("isbn"), isbn));
+            }
+            if (ratingMin != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("rating"), ratingMin));
+            }
+            if (ratingMax != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("rating"), ratingMax));
+            }
+            if (visible != null) {
+                predicates.add(cb.equal(root.get("visible"), visible));
+            }
+            if (minPrice != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+            }
+            if (maxPrice != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), maxPrice));
+            }
+            if (minStock != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("stock"), minStock));
+            }
+            if (publicationDateFrom != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("publicationDate"), publicationDateFrom));
+            }
+            if (publicationDateTo != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("publicationDate"), publicationDateTo));
+            }
+            
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
         
         return repository.search(spec).stream()
                 .map(this::toResponseDTO)
@@ -498,8 +715,10 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public BookResponseDTO update(Long id, BookRequestDTO dto) {
-        Book book = repository.getById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found: " + id));
+        Book book = repository.getById(id);
+        if (book == null) {
+            return null;
+        }
         
         book.setTitle(dto.getTitle());
         book.setAuthor(dto.getAuthor());
@@ -517,8 +736,10 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public BookResponseDTO partialUpdate(Long id, BookPatchDTO dto) {
-        Book book = repository.getById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found: " + id));
+        Book book = repository.getById(id);
+        if (book == null) {
+            return null;
+        }
         
         if (dto.getTitle() != null) book.setTitle(dto.getTitle());
         if (dto.getAuthor() != null) book.setAuthor(dto.getAuthor());
@@ -535,18 +756,20 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public Boolean delete(Long id) {
-        return repository.getById(id)
-                .map(book -> {
-                    repository.delete(book);
-                    return true;
-                })
-                .orElse(false);
+        Book book = repository.getById(id);
+        if (book == null) {
+            return false;
+        }
+        repository.delete(book);
+        return true;
     }
 
     @Override
     public AvailabilityResponseDTO checkAvailability(Long id) {
-        Book book = repository.getById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found: " + id));
+        Book book = repository.getById(id);
+        if (book == null) {
+            return null;
+        }
         
         return new AvailabilityResponseDTO(
             book.getId(),
@@ -560,15 +783,13 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public BookResponseDTO updateStock(Long id, StockUpdateDTO dto) {
-        Book book = repository.getById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found: " + id));
-        
-        int newStock = book.getStock() + dto.getQuantity();
-        if (newStock < 0) {
-            throw new IllegalArgumentException("Insufficient stock");
+    public BookResponseDTO updateStock(Long id, Integer quantity) {
+        Book book = repository.getById(id);
+        if (book == null) {
+            return null;
         }
         
+        int newStock = book.getStock() + quantity;
         book.setStock(newStock);
         Book saved = repository.save(book);
         return toResponseDTO(saved);
@@ -592,101 +813,188 @@ public class BookServiceImpl implements BookService {
     }
 
     private Book toEntity(BookRequestDTO dto) {
-        Book book = new Book();
-        book.setTitle(dto.getTitle());
-        book.setAuthor(dto.getAuthor());
-        book.setPublicationDate(dto.getPublicationDate());
-        book.setCategory(dto.getCategory());
-        book.setIsbn(dto.getIsbn());
-        book.setRating(dto.getRating());
-        book.setVisible(dto.getVisible());
-        book.setStock(dto.getStock());
-        book.setPrice(dto.getPrice());
-        return book;
+        return Book.builder()
+            .title(dto.getTitle())
+            .author(dto.getAuthor())
+            .publicationDate(dto.getPublicationDate())
+            .category(dto.getCategory())
+            .isbn(dto.getIsbn())
+            .rating(dto.getRating())
+            .visible(dto.getVisible())
+            .stock(dto.getStock())
+            .price(dto.getPrice())
+            .build();
     }
 }
 ```
 
 ---
 
-## 🔍 BookSpecification.java (Para búsquedas combinadas)
+### Controller - BookController.java (con ResponseEntity)
 
 ```java
-package com.relatosdepapel.catalogue.specification;
+package com.relatosdepapel.catalogue.controller;
 
-import com.relatosdepapel.catalogue.entity.Book;
-import org.springframework.data.jpa.domain.Specification;
-import jakarta.persistence.criteria.Predicate;
+import com.relatosdepapel.catalogue.dto.*;
+import com.relatosdepapel.catalogue.service.BookService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
-public class BookSpecification {
+@RestController
+@RequestMapping("/api/v1/books")
+@RequiredArgsConstructor
+public class BookController {
 
-    public static Specification<Book> withFilters(
-            String title, String author, String category, String isbn,
-            Integer ratingMin, Integer ratingMax, Boolean visible,
-            BigDecimal minPrice, BigDecimal maxPrice, Integer minStock,
-            LocalDate publicationDateFrom, LocalDate publicationDateTo) {
+    private final BookService service;
+
+    // GET /api/v1/books
+    @GetMapping
+    public ResponseEntity<List<BookResponseDTO>> getAll(
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String isbn,
+            @RequestParam(required = false) Integer ratingMin,
+            @RequestParam(required = false) Integer ratingMax,
+            @RequestParam(required = false) Boolean visible,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Integer minStock,
+            @RequestParam(required = false) LocalDate publicationDateFrom,
+            @RequestParam(required = false) LocalDate publicationDateTo) {
         
-        return (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            
-            if (title != null && !title.isEmpty()) {
-                predicates.add(cb.like(cb.lower(root.get("title")), 
-                    "%" + title.toLowerCase() + "%"));
-            }
-            
-            if (author != null && !author.isEmpty()) {
-                predicates.add(cb.like(cb.lower(root.get("author")), 
-                    "%" + author.toLowerCase() + "%"));
-            }
-            
-            if (category != null && !category.isEmpty()) {
-                predicates.add(cb.equal(root.get("category"), category));
-            }
-            
-            if (isbn != null && !isbn.isEmpty()) {
-                predicates.add(cb.equal(root.get("isbn"), isbn));
-            }
-            
-            if (ratingMin != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("rating"), ratingMin));
-            }
-            
-            if (ratingMax != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("rating"), ratingMax));
-            }
-            
-            if (visible != null) {
-                predicates.add(cb.equal(root.get("visible"), visible));
-            }
-            
-            if (minPrice != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), minPrice));
-            }
-            
-            if (maxPrice != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("price"), maxPrice));
-            }
-            
-            if (minStock != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("stock"), minStock));
-            }
-            
-            if (publicationDateFrom != null) {
-                predicates.add(cb.greaterThanOrEqualTo(
-                    root.get("publicationDate"), publicationDateFrom));
-            }
-            
-            if (publicationDateTo != null) {
-                predicates.add(cb.lessThanOrEqualTo(
-                    root.get("publicationDate"), publicationDateTo));
-            }
-            
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
+        // Si no hay filtros, devolver todos
+        if (title == null && author == null && category == null && isbn == null &&
+            ratingMin == null && ratingMax == null && visible == null &&
+            minPrice == null && maxPrice == null && minStock == null &&
+            publicationDateFrom == null && publicationDateTo == null) {
+            return ResponseEntity.ok(service.getAll()); // 200
+        }
+        
+        // Con filtros, buscar
+        List<BookResponseDTO> result = service.search(
+            title, author, category, isbn, ratingMin, ratingMax, visible,
+            minPrice, maxPrice, minStock, publicationDateFrom, publicationDateTo
+        );
+        return ResponseEntity.ok(result); // 200
+    }
+
+    // GET /api/v1/books/{id}
+    @GetMapping("/{id}")
+    public ResponseEntity<BookResponseDTO> getById(@PathVariable Long id) {
+        BookResponseDTO book = service.getById(id);
+        if (book == null) {
+            return ResponseEntity.notFound().build(); // 404
+        }
+        return ResponseEntity.ok(book); // 200
+    }
+
+    // POST /api/v1/books
+    @PostMapping
+    public ResponseEntity<?> create(@RequestBody BookRequestDTO dto) {
+        // Validación: título no vacío
+        if (dto.getTitle() == null || dto.getTitle().isEmpty()) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "El título no puede estar vacío")); // 400
+        }
+        // Validación: autor no vacío
+        if (dto.getAuthor() == null || dto.getAuthor().isEmpty()) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "El autor no puede estar vacío")); // 400
+        }
+        // Validación: ISBN no vacío
+        if (dto.getIsbn() == null || dto.getIsbn().isEmpty()) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "El ISBN no puede estar vacío")); // 400
+        }
+        // Validación: precio positivo
+        if (dto.getPrice() == null || dto.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "El precio debe ser mayor a 0")); // 400
+        }
+        // Validación: stock no negativo
+        if (dto.getStock() == null || dto.getStock() < 0) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "El stock no puede ser negativo")); // 400
+        }
+        
+        return ResponseEntity.status(201).body(service.create(dto)); // 201
+    }
+
+    // PUT /api/v1/books/{id}
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody BookRequestDTO dto) {
+        // Validaciones
+        if (dto.getTitle() == null || dto.getTitle().isEmpty()) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "El título no puede estar vacío")); // 400
+        }
+        
+        BookResponseDTO updated = service.update(id, dto);
+        if (updated == null) {
+            return ResponseEntity.notFound().build(); // 404
+        }
+        return ResponseEntity.ok(updated); // 200
+    }
+
+    // PATCH /api/v1/books/{id}
+    @PatchMapping("/{id}")
+    public ResponseEntity<?> partialUpdate(@PathVariable Long id, @RequestBody BookPatchDTO dto) {
+        BookResponseDTO updated = service.partialUpdate(id, dto);
+        if (updated == null) {
+            return ResponseEntity.notFound().build(); // 404
+        }
+        return ResponseEntity.ok(updated); // 200
+    }
+
+    // DELETE /api/v1/books/{id}
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Boolean> delete(@PathVariable Long id) {
+        Boolean deleted = service.delete(id);
+        if (!deleted) {
+            return ResponseEntity.notFound().build(); // 404
+        }
+        return ResponseEntity.ok(true); // 200
+    }
+
+    // GET /api/v1/books/{id}/availability
+    @GetMapping("/{id}/availability")
+    public ResponseEntity<AvailabilityResponseDTO> checkAvailability(@PathVariable Long id) {
+        AvailabilityResponseDTO availability = service.checkAvailability(id);
+        if (availability == null) {
+            return ResponseEntity.notFound().build(); // 404
+        }
+        return ResponseEntity.ok(availability); // 200
+    }
+
+    // PATCH /api/v1/books/{id}/stock
+    @PatchMapping("/{id}/stock")
+    public ResponseEntity<?> updateStock(@PathVariable Long id, @RequestBody StockUpdateDTO dto) {
+        // Validación: quantity no null
+        if (dto.getQuantity() == null) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "La cantidad no puede ser nula")); // 400
+        }
+        
+        // Verificar que el libro existe
+        BookResponseDTO book = service.getById(id);
+        if (book == null) {
+            return ResponseEntity.notFound().build(); // 404
+        }
+        
+        // Verificar stock suficiente si es decremento
+        if (dto.getQuantity() < 0 && book.getStock() + dto.getQuantity() < 0) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "Stock insuficiente")); // 400
+        }
+        
+        BookResponseDTO updated = service.updateStock(id, dto.getQuantity());
+        return ResponseEntity.ok(updated); // 200
     }
 }
 ```
@@ -734,7 +1042,7 @@ eureka:
 ## 🧪 data.sql
 
 ```sql
-INSERT INTO book (title, author, publication_date, category, isbn, rating, visible, stock, price) VALUES
+INSERT INTO books (title, author, publication_date, category, isbn, rating, visible, stock, price) VALUES
 ('El Quijote', 'Miguel de Cervantes', '1605-01-16', 'Clásicos', '9788467033601', 5, true, 100, 19.99),
 ('Cien años de soledad', 'Gabriel García Márquez', '1967-05-30', 'Realismo Mágico', '9788437604947', 5, true, 50, 24.99),
 ('1984', 'George Orwell', '1949-06-08', 'Distopía', '9788423342150', 4, true, 75, 15.99),
@@ -761,4 +1069,5 @@ INSERT INTO book (title, author, publication_date, category, isbn, rating, visib
 - [ ] Endpoint `/stock` para ms-payments
 - [ ] **2 capas Repository:** BookJpaRepository + BookRepository
 - [ ] **2 capas Service:** BookService + BookServiceImpl
+- [ ] **Manejo de errores con ResponseEntity** (sin GlobalExceptionHandler)
 - [ ] Registro automático en Eureka
