@@ -97,7 +97,7 @@ Desarrollar el backend de una aplicación web de librería online utilizando arq
 
 ---
 
-### 2️⃣ API Gateway (Ya tienes el código, pero si necesitas recrear)
+### 2️⃣ API Gateway (Ya tienes el código)
 
 | Campo | Valor |
 |-------|-------|
@@ -136,11 +136,10 @@ Desarrollar el backend de una aplicación web de librería online utilizando arq
 **Dependencias a seleccionar:**
 - ✅ Spring Web
 - ✅ Spring Data JPA
-- ✅ H2 Database (o MySQL Driver / PostgreSQL Driver)
+- ✅ H2 Database
 - ✅ Eureka Discovery Client
 - ✅ Spring Boot Actuator
 - ✅ Lombok
-- ✅ Validation (Bean Validation with Hibernate validator)
 
 ---
 
@@ -161,11 +160,10 @@ Desarrollar el backend de una aplicación web de librería online utilizando arq
 **Dependencias a seleccionar:**
 - ✅ Spring Web
 - ✅ Spring Data JPA
-- ✅ H2 Database (o MySQL Driver / PostgreSQL Driver)
+- ✅ H2 Database
 - ✅ Eureka Discovery Client
 - ✅ Spring Boot Actuator
 - ✅ Lombok
-- ✅ Validation (Bean Validation with Hibernate validator)
 
 ---
 
@@ -173,10 +171,10 @@ Desarrollar el backend de una aplicación web de librería online utilizando arq
 
 ```
 relatos-de-papel-backend/
-├── README-PROYECTO.md              ← Este archivo (guía principal)
-├── api-ms-books-catalogue.md       ← Diseño API del buscador
-├── api-ms-books-payments.md        ← Diseño API del operador
-├── api-gateway.md                  ← Diseño del Gateway
+├── README-PROYECTO.md
+├── api-ms-books-catalogue.md
+├── api-ms-books-payments.md
+├── api-gateway.md
 │
 ├── eureka-server/
 │   ├── src/main/java/com/relatosdepapel/eureka/
@@ -217,16 +215,16 @@ relatos-de-papel-backend/
 │   │   │   └── BookServiceImpl.java          ← Implementación
 │   │   ├── repository/
 │   │   │   ├── BookJpaRepository.java        ← Interface JPA
-│   │   │   └── BookRepository.java           ← Wrapper/Abstracción
+│   │   │   └── BookRepository.java           ← Wrapper
 │   │   ├── entity/
 │   │   │   └── Book.java
-│   │   ├── dto/
-│   │   │   ├── BookRequestDTO.java
-│   │   │   ├── BookResponseDTO.java
-│   │   │   └── BookSearchDTO.java
-│   │   └── exception/
-│   │       ├── GlobalExceptionHandler.java
-│   │       └── ResourceNotFoundException.java
+│   │   └── dto/
+│   │       ├── BookRequestDTO.java
+│   │       ├── BookResponseDTO.java
+│   │       ├── BookPatchDTO.java
+│   │       ├── AvailabilityResponseDTO.java
+│   │       ├── StockUpdateDTO.java
+│   │       └── ErrorResponseDTO.java
 │   ├── src/main/resources/
 │   │   ├── application.yml
 │   │   └── data.sql
@@ -242,18 +240,21 @@ relatos-de-papel-backend/
 │   │   │   └── PaymentServiceImpl.java       ← Implementación
 │   │   ├── repository/
 │   │   │   ├── PaymentJpaRepository.java     ← Interface JPA
-│   │   │   └── PaymentRepository.java        ← Wrapper/Abstracción
+│   │   │   └── PaymentRepository.java        ← Wrapper
 │   │   ├── entity/
 │   │   │   └── Payment.java
 │   │   ├── dto/
 │   │   │   ├── PaymentRequestDTO.java
 │   │   │   ├── PaymentResponseDTO.java
-│   │   │   └── BookAvailabilityDTO.java
+│   │   │   ├── PaymentStatusDTO.java
+│   │   │   ├── BookAvailabilityDTO.java
+│   │   │   ├── StockUpdateDTO.java
+│   │   │   ├── UserPaymentsResponseDTO.java
+│   │   │   └── ErrorResponseDTO.java
 │   │   ├── client/
 │   │   │   └── BookCatalogueClient.java
-│   │   └── exception/
-│   │       ├── GlobalExceptionHandler.java
-│   │       └── PaymentException.java
+│   │   └── config/
+│   │       └── RestTemplateConfig.java
 │   ├── src/main/resources/
 │   │   ├── application.yml
 │   │   └── data.sql
@@ -263,6 +264,8 @@ relatos-de-papel-backend/
     ├── catalogue_db_schema.sql
     └── payments_db_schema.sql
 ```
+
+> ⚠️ **Nota:** No se usa `GlobalExceptionHandler` ni excepciones personalizadas. El manejo de errores se hace directamente en el Controller con `ResponseEntity`.
 
 ---
 
@@ -302,13 +305,13 @@ relatos-de-papel-backend/
 | 4 | **MS Catalogue - Entity** | Crear entidad Book | ⬜ Pendiente |
 | 5 | **MS Catalogue - Repository** | 2 capas: JpaRepository + Wrapper | ⬜ Pendiente |
 | 6 | **MS Catalogue - Service** | 2 capas: Interface + Impl | ⬜ Pendiente |
-| 7 | **MS Catalogue - Controller** | Endpoints REST | ⬜ Pendiente |
+| 7 | **MS Catalogue - Controller** | Endpoints REST con ResponseEntity | ⬜ Pendiente |
 | 8 | **MS Payments** | Crear con Spring Initializr | ⬜ Pendiente |
 | 9 | **MS Payments - Entity** | Crear entidad Payment | ⬜ Pendiente |
 | 10 | **MS Payments - Repository** | 2 capas: JpaRepository + Wrapper | ⬜ Pendiente |
 | 11 | **MS Payments - Client** | Cliente HTTP para Catalogue | ⬜ Pendiente |
 | 12 | **MS Payments - Service** | 2 capas: Interface + Impl | ⬜ Pendiente |
-| 13 | **MS Payments - Controller** | Endpoints REST | ⬜ Pendiente |
+| 13 | **MS Payments - Controller** | Endpoints REST con ResponseEntity | ⬜ Pendiente |
 | 14 | **Pruebas** | Probar flujo completo | ⬜ Pendiente |
 | 15 | **Videomemoria** | Grabar demostración 15 min | ⬜ Pendiente |
 
@@ -367,6 +370,7 @@ relatos-de-papel-backend/
 - [ ] **Búsqueda COMBINADA de múltiples atributos**
 - [ ] 2 capas Repository: JpaRepository + Wrapper
 - [ ] 2 capas Service: Interface + Impl
+- [ ] Manejo de errores con ResponseEntity
 
 ### ✅ Criterios 3 y 4: API del Operador (2 puntos - 20%)
 - [ ] API REST siguiendo recomendaciones
@@ -374,6 +378,7 @@ relatos-de-papel-backend/
 - [ ] **Validar libros llamando a ms-books-catalogue**
 - [ ] Verificar: existencia, visibilidad, stock
 - [ ] 2 capas Repository + 2 capas Service
+- [ ] Manejo de errores con ResponseEntity
 
 ### ✅ Criterios 5 y 6: Eureka (1 punto - 10%)
 - [ ] Servidor Eureka funcionando
@@ -450,4 +455,5 @@ El Gateway espera peticiones POST con este formato JSON:
 - **El Gateway YA transcribe peticiones POST** ✅
 - Usar **2 capas en Repository** (JpaRepository + Wrapper)
 - Usar **2 capas en Service** (Interface + Impl)
+- **Manejo de errores con ResponseEntity** (sin GlobalExceptionHandler)
 - Entrega: **único archivo ZIP** sin carpetas `target`
