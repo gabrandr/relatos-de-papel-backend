@@ -1,8 +1,8 @@
 # 📊 Estado de Avance - Relatos de Papel Backend
 
-> **Última actualización:** 2026-01-26  
-> **Sesión:** 1  
-> **Progreso general:** 30% (Infraestructura base completada)
+> **Última actualización:** 2026-01-29  
+> **Sesión:** 2  
+> **Progreso general:** 40% (Infraestructura base + MS Catalogue iniciado)
 
 ---
 
@@ -73,35 +73,53 @@ cd gateway
 
 ## 🔄 En Progreso
 
-### 3. MS Books Catalogue (⬜ 0%)
+### 3. MS Books Catalogue (🔄 40%)
 
 **Puerto asignado:** 8081  
 **Base de datos:** H2 (en memoria) - `catalogue_db`
 
-**Estructura planeada:**
+**Estado actual:**
+
+- ✅ Configuración base (`application.yaml`)
+- ✅ Entidad `Book.java` con 9 atributos
+- ✅ Archivo de constantes `Consts.java` (buena práctica)
+- ✅ 6 DTOs creados
+- ⬜ Capa Repository (pendiente)
+- ⬜ Capa Service (pendiente)
+- ⬜ Controller (pendiente)
+
+**Estructura implementada:**
 
 ```
 ms-books-catalogue/
-└── src/main/java/com/relatosdepapel/catalogue/
-    ├── entity/         ← Book.java
-    ├── repository/     ← 2 capas (BookJpaRepository + BookRepository)
-    ├── service/        ← 2 capas (BookService + BookServiceImpl)
-    ├── controller/     ← BookController
-    ├── dto/            ← DTOs (Request, Response, Patch, etc.)
-    ├── specification/  ← BookSpecification (búsquedas dinámicas)
-    └── exception/      ← Manejo de errores
+└── src/main/java/com/relatosdepapel/ms_books_catalogue/
+    ├── entity/
+    │   └── Book.java           ✅ Completado
+    ├── dto/
+    │   ├── BookRequestDTO.java           ✅ Completado
+    │   ├── BookResponseDTO.java          ✅ Completado
+    │   ├── BookPatchDTO.java             ✅ Completado
+    │   ├── AvailabilityResponseDTO.java  ✅ Completado
+    │   ├── StockUpdateDTO.java           ✅ Completado
+    │   └── ErrorResponseDTO.java         ✅ Completado
+    ├── utils/
+    │   └── Consts.java         ✅ Completado (nombres de columnas)
+    ├── repository/     ⬜ Pendiente (2 capas)
+    ├── service/        ⬜ Pendiente (2 capas)
+    └── controller/     ⬜ Pendiente
 ```
 
 **Próximos pasos:**
 
-1. Configurar `application.yml` (puerto, BD, Eureka)
-2. Crear entidad `Book` con 9 atributos
-3. Crear 2 capas Repository (JpaRepository + Wrapper)
-4. Crear 2 capas Service (Interface + Impl)
-5. Crear DTOs
-6. Crear Specifications para búsquedas combinadas
-7. Crear Controller con todos los endpoints
-8. Agregar datos de prueba (`data.sql`)
+1. ~~Configurar `application.yaml`~~ ✅ Completado
+2. ~~Crear entidad `Book` con 9 atributos~~ ✅ Completado
+3. ~~Crear 6 DTOs~~ ✅ Completado
+4. Crear 2 capas Repository (JpaRepository + Wrapper) ⬅️ **Siguiente**
+5. Crear 2 capas Service (Interface + Impl)
+6. Crear Controller con 8 endpoints
+7. Implementar Specifications para búsquedas dinámicas
+8. Crear `data.sql` con datos de prueba
+9. Verificar funcionamiento y registro en Eureka
 
 ---
 
