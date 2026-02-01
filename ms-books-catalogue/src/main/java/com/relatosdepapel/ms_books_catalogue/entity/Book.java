@@ -53,7 +53,8 @@ public class Book {
     @Column(name = Consts.PRICE, nullable = false)
     private BigDecimal price;
 
-    // Metodo para actualizar Book desde un BookRequestDTO
+    // Metodo para actualizar Book desde un BookRequestDTO - no se actualiza el ID e
+    // ISBN
     public void updateFromDTO(BookRequestDTO dto) {
         this.title = dto.getTitle();
         this.author = dto.getAuthor();
