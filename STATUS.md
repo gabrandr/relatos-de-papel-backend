@@ -1,8 +1,8 @@
 # 📊 Estado de Avance - Relatos de Papel Backend
 
 > **Última actualización:** 2026-01-29  
-> **Sesión:** 2  
-> **Progreso general:** 40% (Infraestructura base + MS Catalogue iniciado)
+> **Sesión:** 3  
+> **Progreso general:** 55% (Infraestructura base + MS Catalogue Repository completado)
 
 ---
 
@@ -73,7 +73,7 @@ cd gateway
 
 ## 🔄 En Progreso
 
-### 3. MS Books Catalogue (🔄 40%)
+### 3. MS Books Catalogue (🔄 55%)
 
 **Puerto asignado:** 8081  
 **Base de datos:** H2 (en memoria) - `catalogue_db`
@@ -84,7 +84,7 @@ cd gateway
 - ✅ Entidad `Book.java` con 9 atributos
 - ✅ Archivo de constantes `Consts.java` (buena práctica)
 - ✅ 6 DTOs creados
-- ⬜ Capa Repository (pendiente)
+- ✅ **Capa Repository completada (2 capas)**
 - ⬜ Capa Service (pendiente)
 - ⬜ Controller (pendiente)
 
@@ -104,7 +104,9 @@ ms-books-catalogue/
     │   └── ErrorResponseDTO.java         ✅ Completado
     ├── utils/
     │   └── Consts.java         ✅ Completado (nombres de columnas)
-    ├── repository/     ⬜ Pendiente (2 capas)
+    ├── repository/
+    │   ├── BookJpaRepository.java  ✅ Completado (Capa 1 - Query Methods)
+    │   └── BookRepository.java     ✅ Completado (Capa 2 - Wrapper)
     ├── service/        ⬜ Pendiente (2 capas)
     └── controller/     ⬜ Pendiente
 ```
@@ -114,8 +116,8 @@ ms-books-catalogue/
 1. ~~Configurar `application.yaml`~~ ✅ Completado
 2. ~~Crear entidad `Book` con 9 atributos~~ ✅ Completado
 3. ~~Crear 6 DTOs~~ ✅ Completado
-4. Crear 2 capas Repository (JpaRepository + Wrapper) ⬅️ **Siguiente**
-5. Crear 2 capas Service (Interface + Impl)
+4. ~~Crear 2 capas Repository (JpaRepository + Wrapper)~~ ✅ Completado
+5. Crear 2 capas Service (Interface + Impl) ⬅️ **Siguiente**
 6. Crear Controller con 8 endpoints
 7. Implementar Specifications para búsquedas dinámicas
 8. Crear `data.sql` con datos de prueba
