@@ -13,6 +13,8 @@ import com.relatosdepapel.ms_books_catalogue.dto.BookResponseDTO;
 import com.relatosdepapel.ms_books_catalogue.dto.StockUpdateDTO;
 import com.relatosdepapel.ms_books_catalogue.entity.Book;
 import com.relatosdepapel.ms_books_catalogue.repository.BookRepository;
+import org.springframework.data.jpa.domain.Specification;
+import com.relatosdepapel.ms_books_catalogue.specification.BookSpecification;
 
 import lombok.RequiredArgsConstructor;
 
@@ -162,26 +164,148 @@ public class BookServiceImpl implements BookService {
 
     // METODOS DE BUSQUEDA DINAMICA
 
+    /**
+     * Búsqueda dinámica de libros con múltiples filtros opcionales.
+     * Los filtros se combinan con AND (todos deben cumplirse).
+     * 
+     * @param title               Filtro por título (parcial, case-insensitive)
+     * @param author              Filtro por autor (parcial, case-insensitive)
+     * @param category            Filtro por categoría (exacto)
+     * @param isbn                Filtro por ISBN (exacto)
+     * @param ratingMin           Rating mínimo
+     * @param ratingMax           Rating máximo
+     * @param visible             Filtro por visibilidad
+     * @param minPrice            Precio mínimo
+     * @param maxPrice            Precio máximo
+     * @param publicationDateFrom Fecha de publicación desde
+     * @param publicationDateTo   Fecha de publicación hasta
+     * @param minStock            Stock mínimo
+     * @return Lista de libros que cumplen todos los filtros aplicados
+     */
     @Override
     public List<BookResponseDTO> search(String title, String author, String category, String isbn, Integer ratingMin,
             Integer ratingMax, Boolean visible, BigDecimal minPrice, BigDecimal maxPrice, LocalDate publicationDateFrom,
             LocalDate publicationDateTo, Integer minStock) {
-        // TODO
-        return null;
+        // crear specification base vacio
+        Specification<Book> spec = (root, query, criteriaBuilder) -> null;
+        // agregar filtros segun parametros proporcionados
+
+        // filtro por titulo - busqueda parcial
+        if (title != null) {
+            spec = spec.and(BookSpecification.titleContains(title));
+        }
+        // filtro por autor - busqueda parcial
+        if (author != null) {
+            spec = spec.and(BookSpecification.authorContains(author));
+        }
+        // filtro por categoria - busqueda exacta
+        if (category != null) {
+            spec = spec.and(BookSpecification.hasCategory(category));
+        }
+        // filtro por ISBN - busqueda exacta
+        if (isbn != null) {
+            spec = spec.and(BookSpecification.hasIsbn(isbn));
+        }
+        // filtro por rating minimo
+        if (ratingMin != null) {
+            spec = spec.and(BookSpecification.ratingGreaterThanOrEqual(ratingMin));
+        }
+        // filtro por rating maximo
+        if (ratingMax != null) {
+            spec = spec.and(BookSpecification.ratingLessThanOrEqual(ratingMax));
+        }
+        // filtro por visibilidad
+        if (visible != null) {
+            spec = spec.and(BookSpecification.isVisible(visible));
+        }
+        // filtro por precio minimo
+        if (minPrice != null) {
+            spec = spec.and(BookSpecification.priceGreaterThanOrEqual(minPrice));
+        }
+        // filtro por precio maximo
+        if (maxPrice != null) {
+            spec = spec.and(BookSpecification.priceLessThanOrEqual(maxPrice));
+        }
+        // filtro por fecha de publicacion desde
+        if (publicationDateFrom != null) {
+            spec = spec.and(BookSpecification.publicationDateAfterOrEqual(publicationDateFrom));
+        }
+        // filtro por fecha de publicacion hasta
+        if (publicationDateTo != null) {
+            spec = spec.and(BookSpecification.publicationDateBeforeOrEqual(publicationDateTo));
+        }
+        // filtro por stock minimo
+        if (minStock != null) {
+            spec = spec.and(BookSpecification.stockGreaterThanOrEqual(minStock));
+        }
+        // ejecutar busqueda
+        List<Book> books = bookRepository.search(spec);
+        // convertir a DTO y retornar
+        return books.stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
 
     // METODOS ESPECIALES
 
+    /**
+     * Verifica la disponibilidad de un libro para compra.
+     * Un libro está disponible si es visible Y tiene stock.
+     * 
+     * @param id ID del libro a verificar
+     * @return AvailabilityResponseDTO con info de disponibilidad, o null si no
+     *         existe
+     */
     @Override
     public AvailabilityResponseDTO checkAvailability(Long id) {
-        // TODO
-        return null;
+        // busca libro por ID
+        Book book = bookRepository.getById(id);
+        // si no existe retornar null
+        if (book == null) {
+            return null;
+        }
+        // verificar disponibilidad
+        boolean available = book.getVisible() && book.getStock() > 0;
+        // retornar AvailabilityResponseDTO
+        return new AvailabilityResponseDTO(
+                book.getId(),
+                book.getTitle(),
+                book.getIsbn(),
+                available, // available calculado en base a visible y stock
+                book.getVisible(),
+                book.getStock(),
+                book.getPrice());
     }
 
+    /**
+     * Actualiza el stock de un libro.
+     * 
+     * @param id  ID del libro
+     * @param dto Cantidad a sumar (positivo) o restar (negativo)
+     * @return BookResponseDTO actualizado o null si no existe
+     * @throws IllegalArgumentException si el stock resultante sería negativo
+     */
     @Override
     public BookResponseDTO updateStock(Long id, StockUpdateDTO dto) {
-        // TODO
-        return null;
+        // busca libro por ID
+        Book book = bookRepository.getById(id);
+        // si no existe retornar null
+        if (book == null) {
+            return null;
+        }
+        // calcular nuevo stock
+        int newStock = book.getStock() + dto.getQuantity();
+        // verificar que el stock resultante no sea negativo
+        if (newStock < 0) {
+            throw new IllegalArgumentException("El stock resultante no puede ser negativo. Stock actual: "
+                    + book.getStock() + ", Cantidad a restar: " + dto.getQuantity());
+        }
+        // actualizar el stock
+        book.setStock(newStock);
+        // guardar el libro actualizado
+        Book updatedBook = bookRepository.save(book);
+        // convertir la entidad a DTO y devolverlo
+        return toResponseDTO(updatedBook);
     }
 
     // METODOS HELPERS
