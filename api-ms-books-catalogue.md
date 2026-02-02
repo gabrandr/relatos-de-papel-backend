@@ -10,7 +10,7 @@
 | ----------------- | ------------------------------------ |
 | **Nombre**        | ms-books-catalogue                   |
 | **Puerto**        | 8081                                 |
-| **Base URL**      | `/api/v1/books`                      |
+| **Base URL**      | `/api/books`                         |
 | **Base de Datos** | catalogue_db (H2 o MySQL/PostgreSQL) |
 | **Nombre Eureka** | ms-books-catalogue                   |
 
@@ -90,22 +90,23 @@ src/main/java/com/relatosdepapel/catalogue/
 
 ## 🔗 Tabla de Endpoints
 
-| Método HTTP | URI                               | Query Params                                                                                                                       | Request Body   | Response Body           | Códigos       |
-| ----------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------- | ----------------------- | ------------- |
-| POST        | `/api/v1/books`                   | N/A                                                                                                                                | BookRequestDTO | BookResponseDTO         | 201, 400      |
-| GET         | `/api/v1/books/{id}`              | N/A                                                                                                                                | N/A            | BookResponseDTO         | 200, 404      |
-| GET         | `/api/v1/books`                   | title, author, category, isbn, ratingMin, ratingMax, visible, minPrice, maxPrice, minStock, publicationDateFrom, publicationDateTo | N/A            | List                    | 200           |
-| PUT         | `/api/v1/books/{id}`              | N/A                                                                                                                                | BookRequestDTO | BookResponseDTO         | 200, 400, 404 |
-| PATCH       | `/api/v1/books/{id}`              | N/A                                                                                                                                | BookPatchDTO   | BookResponseDTO         | 200, 400, 404 |
-| DELETE      | `/api/v1/books/{id}`              | N/A                                                                                                                                | N/A            | Boolean                 | 200, 404      |
-| GET         | `/api/v1/books/{id}/availability` | N/A                                                                                                                                | N/A            | AvailabilityResponseDTO | 200, 404      |
-| PATCH       | `/api/v1/books/{id}/stock`        | N/A                                                                                                                                | StockUpdateDTO | BookResponseDTO         | 200, 400, 404 |
+| Método HTTP | URI                            | Query Params                                                                                                                       | Request Body   | Response Body           | Códigos       |
+| ----------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | -------------- | ----------------------- | ------------- |
+| POST        | `/api/books`                   | N/A                                                                                                                                | BookRequestDTO | BookResponseDTO         | 201, 400      |
+| GET         | `/api/books`                   | N/A                                                                                                                                | N/A            | List<BookResponseDTO>   | 200           |
+| GET         | `/api/books/search`            | title, author, category, isbn, ratingMin, ratingMax, visible, minPrice, maxPrice, minStock, publicationDateFrom, publicationDateTo | N/A            | List<BookResponseDTO>   | 200           |
+| GET         | `/api/books/{id}`              | N/A                                                                                                                                | N/A            | BookResponseDTO         | 200, 404      |
+| PUT         | `/api/books/{id}`              | N/A                                                                                                                                | BookRequestDTO | BookResponseDTO         | 200, 400, 404 |
+| PATCH       | `/api/books/{id}`              | N/A                                                                                                                                | BookPatchDTO   | BookResponseDTO         | 200, 400, 404 |
+| DELETE      | `/api/books/{id}`              | N/A                                                                                                                                | N/A            | Void                    | 204, 404      |
+| GET         | `/api/books/{id}/availability` | N/A                                                                                                                                | N/A            | AvailabilityResponseDTO | 200, 404      |
+| PATCH       | `/api/books/{id}/stock`        | N/A                                                                                                                                | StockUpdateDTO | BookResponseDTO         | 200, 400, 404 |
 
 ---
 
 ## 📝 Detalle de Endpoints
 
-### POST /api/v1/books - Crear libro
+### POST /api/books - Crear libro
 
 **Request Body (BookRequestDTO):**
 
@@ -151,7 +152,7 @@ src/main/java/com/relatosdepapel/catalogue/
 
 ---
 
-### GET /api/v1/books/{id} - Obtener libro por ID
+### GET /api/books/{id} - Obtener libro por ID
 
 **Response 200 OK (BookResponseDTO):**
 
@@ -174,7 +175,44 @@ src/main/java/com/relatosdepapel/catalogue/
 
 ---
 
-### GET /api/v1/books - Buscar libros con filtros
+### GET /api/books - Obtener todos los libros
+
+**Sin query parameters** (retorna todos los libros del catálogo)
+
+**Response 200 OK:**
+
+```json
+[
+  {
+    "id": 1,
+    "title": "Don Quijote de la Mancha",
+    "author": "Miguel de Cervantes",
+    "publicationDate": "1605-01-16",
+    "category": "Clásicos",
+    "isbn": "9788467033601",
+    "rating": 5,
+    "visible": true,
+    "stock": 10,
+    "price": 19.99
+  },
+  {
+    "id": 2,
+    "title": "Cien años de soledad",
+    "author": "Gabriel García Márquez",
+    "publicationDate": "1967-05-30",
+    "category": "Realismo mágico",
+    "isbn": "9780307474728",
+    "rating": 5,
+    "visible": true,
+    "stock": 15,
+    "price": 24.99
+  }
+]
+```
+
+---
+
+### GET /api/books/search - Buscar libros con filtros
 
 > ⚠️ **CRÍTICO**: Búsqueda por TODOS los atributos de forma INDIVIDUAL y COMBINADA.
 
@@ -198,17 +236,17 @@ src/main/java/com/relatosdepapel/catalogue/
 **Ejemplos de búsqueda individual:**
 
 ```
-GET /api/v1/books?author=cervantes
-GET /api/v1/books?category=Clásicos
-GET /api/v1/books?ratingMin=4
-GET /api/v1/books?visible=true
+GET /api/books/search?author=cervantes
+GET /api/books/search?category=Clásicos
+GET /api/books/search?ratingMin=4
+GET /api/books/search?visible=true
 ```
 
 **Ejemplos de búsqueda combinada:**
 
 ```
-GET /api/v1/books?author=cervantes&category=Clásicos&ratingMin=4&visible=true
-GET /api/v1/books?minPrice=10&maxPrice=30&minStock=5
+GET /api/books/search?author=cervantes&category=Clásicos&ratingMin=4&visible=true
+GET /api/books/search?minPrice=10&maxPrice=30&minStock=5
 ```
 
 **Response 200 OK:**
@@ -231,7 +269,7 @@ GET /api/v1/books?minPrice=10&maxPrice=30&minStock=5
 
 ---
 
-### PUT /api/v1/books/{id} - Actualizar libro completo
+### PUT /api/books/{id} - Actualizar libro completo
 
 **Request Body:** Igual que POST (todos los campos)
 
@@ -241,7 +279,7 @@ GET /api/v1/books?minPrice=10&maxPrice=30&minStock=5
 
 ---
 
-### PATCH /api/v1/books/{id} - Actualizar libro parcial
+### PATCH /api/books/{id} - Actualizar libro parcial
 
 **Request Body (BookPatchDTO):** Solo campos a modificar
 
@@ -256,23 +294,15 @@ GET /api/v1/books?minPrice=10&maxPrice=30&minStock=5
 
 ---
 
-### DELETE /api/v1/books/{id} - Eliminar libro
+### DELETE /api/books/{id} - Eliminar libro
 
-**Response 200 OK:**
+**Response 204 No Content:** (sin body)
 
-```json
-true
-```
-
-**Response 404 Not Found:**
-
-```json
-false
-```
+**Si no existiera:** `404 Not Found` (sin body)
 
 ---
 
-### GET /api/v1/books/{id}/availability - Verificar disponibilidad
+### GET /api/books/{id}/availability - Verificar disponibilidad
 
 > 🔗 **Usado por ms-books-payments** para validar antes de comprar.
 
@@ -294,7 +324,7 @@ false
 
 ---
 
-### PATCH /api/v1/books/{id}/stock - Actualizar stock
+### PATCH /api/books/{id}/stock - Actualizar stock
 
 > 🔗 **Usado por ms-books-payments** para decrementar/incrementar stock.
 
@@ -664,13 +694,13 @@ public interface BookService {
 
     BookResponseDTO update(Long id, BookRequestDTO dto);
 
-    BookResponseDTO partialUpdate(Long id, BookPatchDTO dto);
+    BookResponseDTO patch(Long id, BookPatchDTO dto);
 
-    Boolean delete(Long id);
+    boolean delete(Long id);
 
     AvailabilityResponseDTO checkAvailability(Long id);
 
-    BookResponseDTO updateStock(Long id, Integer quantity);
+    BookResponseDTO updateStock(Long id, StockUpdateDTO dto);
 }
 ```
 
@@ -803,7 +833,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public BookResponseDTO partialUpdate(Long id, BookPatchDTO dto) {
+    public BookResponseDTO patch(Long id, BookPatchDTO dto) {
         Book book = repository.getById(id);
         if (book == null) {
             return null;
@@ -823,7 +853,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public Boolean delete(Long id) {
+    public boolean delete(Long id) {
         Book book = repository.getById(id);
         if (book == null) {
             return false;
@@ -851,13 +881,17 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public BookResponseDTO updateStock(Long id, Integer quantity) {
+    public BookResponseDTO updateStock(Long id, StockUpdateDTO dto) {
         Book book = repository.getById(id);
         if (book == null) {
             return null;
         }
 
-        int newStock = book.getStock() + quantity;
+        int newStock = book.getStock() + dto.getQuantity();
+        if (newStock < 0) {
+            throw new IllegalArgumentException("Stock cannot be negative");
+        }
+
         book.setStock(newStock);
         Book saved = repository.save(book);
         return toResponseDTO(saved);
@@ -914,15 +948,22 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/books")
+@RequestMapping("/api/books")
 @RequiredArgsConstructor
 public class BookController {
 
     private final BookService service;
 
-    // GET /api/v1/books
+    // GET /api/books - Obtener todos los libros
     @GetMapping
-    public ResponseEntity<List<BookResponseDTO>> getAll(
+    public ResponseEntity<List<BookResponseDTO>> getAllBooks() {
+        List<BookResponseDTO> books = service.getAll();
+        return ResponseEntity.ok(books); // 200
+    }
+
+    // GET /api/books/search - Búsqueda con filtros
+    @GetMapping("/search")
+    public ResponseEntity<List<BookResponseDTO>> searchBooks(
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String author,
             @RequestParam(required = false) String category,
@@ -933,26 +974,19 @@ public class BookController {
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) Integer minStock,
-            @RequestParam(required = false) LocalDate publicationDateFrom,
-            @RequestParam(required = false) LocalDate publicationDateTo) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate publicationDateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate publicationDateTo) {
 
-        // Si no hay filtros, devolver todos
-        if (title == null && author == null && category == null && isbn == null &&
-            ratingMin == null && ratingMax == null && visible == null &&
-            minPrice == null && maxPrice == null && minStock == null &&
-            publicationDateFrom == null && publicationDateTo == null) {
-            return ResponseEntity.ok(service.getAll()); // 200
-        }
-
-        // Con filtros, buscar
         List<BookResponseDTO> result = service.search(
-            title, author, category, isbn, ratingMin, ratingMax, visible,
-            minPrice, maxPrice, minStock, publicationDateFrom, publicationDateTo
+            title, author, category, isbn,
+            ratingMin, ratingMax, visible,
+            minPrice, maxPrice, minStock,
+            publicationDateFrom, publicationDateTo
         );
         return ResponseEntity.ok(result); // 200
     }
 
-    // GET /api/v1/books/{id}
+    // GET /api/books/{id}
     @GetMapping("/{id}")
     public ResponseEntity<BookResponseDTO> getById(@PathVariable Long id) {
         BookResponseDTO book = service.getById(id);
@@ -962,7 +996,7 @@ public class BookController {
         return ResponseEntity.ok(book); // 200
     }
 
-    // POST /api/v1/books
+    // POST /api/books
     @PostMapping
     public ResponseEntity<?> create(@RequestBody BookRequestDTO dto) {
         // Validación: título no vacío
@@ -994,7 +1028,7 @@ public class BookController {
         return ResponseEntity.status(201).body(service.create(dto)); // 201
     }
 
-    // PUT /api/v1/books/{id}
+    // PUT /api/books/{id}
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody BookRequestDTO dto) {
         // Validaciones
@@ -1010,27 +1044,27 @@ public class BookController {
         return ResponseEntity.ok(updated); // 200
     }
 
-    // PATCH /api/v1/books/{id}
+    // PATCH /api/books/{id}
     @PatchMapping("/{id}")
-    public ResponseEntity<?> partialUpdate(@PathVariable Long id, @RequestBody BookPatchDTO dto) {
-        BookResponseDTO updated = service.partialUpdate(id, dto);
+    public ResponseEntity<?> patchBook(@PathVariable Long id, @RequestBody BookPatchDTO dto) {
+        BookResponseDTO updated = service.patch(id, dto);
         if (updated == null) {
             return ResponseEntity.notFound().build(); // 404
         }
         return ResponseEntity.ok(updated); // 200
     }
 
-    // DELETE /api/v1/books/{id}
+    // DELETE /api/books/{id}
     @DeleteMapping("/{id}")
-    public ResponseEntity<Boolean> delete(@PathVariable Long id) {
-        Boolean deleted = service.delete(id);
+    public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
+        boolean deleted = service.delete(id);
         if (!deleted) {
             return ResponseEntity.notFound().build(); // 404
         }
-        return ResponseEntity.ok(true); // 200
+        return ResponseEntity.noContent().build(); // 204
     }
 
-    // GET /api/v1/books/{id}/availability
+    // GET /api/books/{id}/availability
     @GetMapping("/{id}/availability")
     public ResponseEntity<AvailabilityResponseDTO> checkAvailability(@PathVariable Long id) {
         AvailabilityResponseDTO availability = service.checkAvailability(id);
@@ -1040,7 +1074,7 @@ public class BookController {
         return ResponseEntity.ok(availability); // 200
     }
 
-    // PATCH /api/v1/books/{id}/stock
+    // PATCH /api/books/{id}/stock
     @PatchMapping("/{id}/stock")
     public ResponseEntity<?> updateStock(@PathVariable Long id, @RequestBody StockUpdateDTO dto) {
         // Validación: quantity no null

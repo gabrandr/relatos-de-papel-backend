@@ -10,7 +10,7 @@
 | ----------------- | ------------------------------------------------------------------ |
 | **Nombre**        | ms-books-payments                                                  |
 | **Puerto**        | 8082                                                               |
-| **Base URL**      | `/api/v1/payments`                                                 |
+| **Base URL**      | `/api/payments`                                                    |
 | **Base de Datos** | payments_db (H2 o MySQL/PostgreSQL) - **DIFERENTE a catalogue_db** |
 | **Nombre Eureka** | ms-books-payments                                                  |
 | **Dependencia**   | Consume API de ms-books-catalogue vía Eureka (sin IP ni puerto)    |
@@ -98,25 +98,25 @@ src/main/java/com/relatosdepapel/payments/
 
 | Método HTTP | URI                               | Query Params           | Request Body      | Response Body           | Códigos            |
 | ----------- | --------------------------------- | ---------------------- | ----------------- | ----------------------- | ------------------ |
-| POST        | `/api/v1/payments`                | N/A                    | PaymentRequestDTO | PaymentResponseDTO      | 201, 400, 404, 409 |
-| GET         | `/api/v1/payments/{id}`           | N/A                    | N/A               | PaymentResponseDTO      | 200, 404           |
-| GET         | `/api/v1/payments`                | userId, bookId, status | N/A               | List                    | 200                |
+| POST        | `/api/payments`                | N/A                    | PaymentRequestDTO | PaymentResponseDTO      | 201, 400, 404, 409 |
+| GET         | `/api/payments/{id}`           | N/A                    | N/A               | PaymentResponseDTO      | 200, 404           |
+| GET         | `/api/payments`                | userId, bookId, status | N/A               | List                    | 200                |
 | GET         | `/api/v1/users/{userId}/payments` | status                 | N/A               | UserPaymentsResponseDTO | 200                |
-| PATCH       | `/api/v1/payments/{id}`           | N/A                    | PaymentStatusDTO  | PaymentResponseDTO      | 200, 400, 404      |
-| DELETE      | `/api/v1/payments/{id}`           | N/A                    | N/A               | Boolean                 | 200, 404, 409      |
+| PATCH       | `/api/payments/{id}`           | N/A                    | PaymentStatusDTO  | PaymentResponseDTO      | 200, 400, 404      |
+| DELETE      | `/api/payments/{id}`           | N/A                    | N/A               | Boolean                 | 200, 404, 409      |
 
 ---
 
 ## 📝 Detalle de Endpoints
 
-### POST /api/v1/payments - Registrar compra
+### POST /api/payments - Registrar compra
 
 > ⚠️ **CRÍTICO**: Valida el libro llamando a ms-books-catalogue vía Eureka (sin IP ni puerto).
 
 **Flujo de validación:**
 
 ```
-1. Recibe: POST /api/v1/payments {userId, bookId, quantity}
+1. Recibe: POST /api/payments {userId, bookId, quantity}
 2. Llama: GET http://ms-books-catalogue/api/v1/books/{bookId}/availability
 3. Verifica: existe, visible=true, stock >= quantity
 4. Llama: PATCH http://ms-books-catalogue/api/v1/books/{bookId}/stock {quantity: -N}
@@ -180,7 +180,7 @@ src/main/java/com/relatosdepapel/payments/
 
 ---
 
-### GET /api/v1/payments/{id} - Obtener compra por ID
+### GET /api/payments/{id} - Obtener compra por ID
 
 **Response 200 OK (PaymentResponseDTO):**
 
@@ -203,7 +203,7 @@ src/main/java/com/relatosdepapel/payments/
 
 ---
 
-### GET /api/v1/payments - Listar compras con filtros
+### GET /api/payments - Listar compras con filtros
 
 **Query Parameters:**
 
@@ -257,7 +257,7 @@ src/main/java/com/relatosdepapel/payments/
 
 ---
 
-### PATCH /api/v1/payments/{id} - Actualizar estado
+### PATCH /api/payments/{id} - Actualizar estado
 
 **Request Body (PaymentStatusDTO):**
 
@@ -273,7 +273,7 @@ src/main/java/com/relatosdepapel/payments/
 
 ---
 
-### DELETE /api/v1/payments/{id} - Cancelar compra
+### DELETE /api/payments/{id} - Cancelar compra
 
 **Response 200 OK:**
 
@@ -878,7 +878,7 @@ public class PaymentController {
     private final PaymentService service;
     private final BookCatalogueClient catalogueClient;
 
-    // GET /api/v1/payments
+    // GET /api/payments
     @GetMapping("/payments")
     public ResponseEntity<List<PaymentResponseDTO>> getAll(
             @RequestParam(required = false) Long userId,
@@ -892,7 +892,7 @@ public class PaymentController {
         return ResponseEntity.ok(service.search(userId, bookId, status)); // 200
     }
 
-    // GET /api/v1/payments/{id}
+    // GET /api/payments/{id}
     @GetMapping("/payments/{id}")
     public ResponseEntity<PaymentResponseDTO> getById(@PathVariable Long id) {
         PaymentResponseDTO payment = service.getById(id);
@@ -911,7 +911,7 @@ public class PaymentController {
         return ResponseEntity.ok(service.getByUserId(userId, status)); // 200
     }
 
-    // POST /api/v1/payments
+    // POST /api/payments
     @PostMapping("/payments")
     public ResponseEntity<?> create(@RequestBody PaymentRequestDTO dto) {
         // Validación: userId no null
@@ -959,7 +959,7 @@ public class PaymentController {
         return ResponseEntity.status(201).body(created); // 201
     }
 
-    // PATCH /api/v1/payments/{id}
+    // PATCH /api/payments/{id}
     @PatchMapping("/payments/{id}")
     public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestBody PaymentStatusDTO dto) {
         // Validación: status no vacío
@@ -983,7 +983,7 @@ public class PaymentController {
         return ResponseEntity.ok(updated); // 200
     }
 
-    // DELETE /api/v1/payments/{id}
+    // DELETE /api/payments/{id}
     @DeleteMapping("/payments/{id}")
     public ResponseEntity<?> cancel(@PathVariable Long id) {
         // Verificar que existe

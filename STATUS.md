@@ -1,8 +1,8 @@
 # 📊 Estado de Avance - Relatos de Papel Backend
 
-> **Última actualización:** 2026-01-29  
-> **Sesión:** 3  
-> **Progreso general:** 55% (Infraestructura base + MS Catalogue Repository completado)
+> **Última actualización:** 2026-02-01  
+> **Sesión:** 4  
+> **Progreso general:** 70% (Infraestructura base + MS Catalogue Service Layer completado)
 
 ---
 
@@ -73,7 +73,7 @@ cd gateway
 
 ## 🔄 En Progreso
 
-### 3. MS Books Catalogue (🔄 55%)
+### 3. MS Books Catalogue (🔄 70%)
 
 **Puerto asignado:** 8081  
 **Base de datos:** H2 (en memoria) - `catalogue_db`
@@ -85,8 +85,8 @@ cd gateway
 - ✅ Archivo de constantes `Consts.java` (buena práctica)
 - ✅ 6 DTOs creados
 - ✅ **Capa Repository completada (2 capas)**
-- ⬜ Capa Service (pendiente)
-- ⬜ Controller (pendiente)
+- ✅ **Capa Service completada (2 capas + BookSpecification)**
+- ⬜ Controller (pendiente) ← PRÓXIMO
 
 **Estructura implementada:**
 
@@ -117,9 +117,9 @@ ms-books-catalogue/
 2. ~~Crear entidad `Book` con 9 atributos~~ ✅ Completado
 3. ~~Crear 6 DTOs~~ ✅ Completado
 4. ~~Crear 2 capas Repository (JpaRepository + Wrapper)~~ ✅ Completado
-5. Crear 2 capas Service (Interface + Impl) ⬅️ **Siguiente**
-6. Crear Controller con 8 endpoints
-7. Implementar Specifications para búsquedas dinámicas
+5. ~~Crear 2 capas Service (Interface + Impl)~~ ✅ Completado
+6. ~~Implementar BookSpecification para búsquedas dinámicas~~ ✅ Completado
+7. Crear Controller con 9 endpoints ⬅️ **Siguiente**
 8. Crear `data.sql` con datos de prueba
 9. Verificar funcionamiento y registro en Eureka
 
