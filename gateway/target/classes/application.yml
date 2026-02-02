@@ -23,19 +23,24 @@ spring:
     gateway:
       server:
         webflux:
-          discovery:
-            locator:
-              enabled: true
-              lower-case-service-id: true
-          default-filters:
-            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
-          globalcors:
-            cors-configurations:
-              "[/**]": ## For all routes
-                allowedOrigins: ${ALLOWED_ORIGINS:*} # With '*' we allow all origins. We can restrict by indicating domains or ip + port, e.g. http://localhost:3000 (where our front is, or a Vercel domain)
-                allowedHeaders: "*" ## All headers allowed
-                allowedMethods:
-                  - POST
+          routes:
+            # Ruta explícita para MS Books Catalogue
+            - id: ms-books-catalogue
+              uri: lb://MS-BOOKS-CATALOGUE
+              predicates:
+                - Path=/api/books/**
+      globalcors:
+        cors-configurations:
+          "[/**]":
+            allowedOrigins: "*"
+            allowedHeaders: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
 
 ## We enable the Actuator API to be able to access <<host>>/actuator/gateway/routes
 ## We expose the routings that have been automatically detected (all)

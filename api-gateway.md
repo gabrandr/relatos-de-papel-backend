@@ -8,13 +8,13 @@
 
 ## 📋 Información General
 
-| Campo | Valor |
-|-------|-------|
-| **Nombre** | gateway |
-| **Puerto** | 8762 |
-| **Tecnología** | Spring Cloud Gateway WebFlux |
-| **Nombre Eureka** | gateway |
-| **Función** | Transcribe POST → GET/POST/PUT/PATCH/DELETE |
+| Campo             | Valor                                       |
+| ----------------- | ------------------------------------------- |
+| **Nombre**        | gateway                                     |
+| **Puerto**        | 8762                                        |
+| **Tecnología**    | Spring Cloud Gateway WebFlux                |
+| **Nombre Eureka** | gateway                                     |
+| **Función**       | Transcribe POST → GET/POST/PUT/PATCH/DELETE |
 
 ---
 
@@ -22,17 +22,18 @@
 
 **URL:** https://start.spring.io
 
-| Campo | Valor |
-|-------|-------|
-| Project | Maven |
-| Language | Java |
-| Spring Boot | 3.2.x |
-| Group | com.relatosdepapel |
-| Artifact | gateway |
+| Campo        | Valor                      |
+| ------------ | -------------------------- |
+| Project      | Maven                      |
+| Language     | Java                       |
+| Spring Boot  | 3.2.x                      |
+| Group        | com.relatosdepapel         |
+| Artifact     | gateway                    |
 | Package name | com.relatosdepapel.gateway |
-| Java | 17 o 21 |
+| Java         | 17 o 21                    |
 
 **Dependencias:**
+
 - ✅ Gateway (Spring Cloud Gateway)
 - ✅ Eureka Discovery Client
 - ✅ Spring Boot Actuator
@@ -91,6 +92,7 @@ gateway/
 ├── src/main/java/com/unir/gateway/
 │   ├── GatewayAndFiltersApplication.java
 │   ├── config/
+│   │   ├── GatewayConfig.java            ✅ Configuración de rutas
 │   │   └── MapperConfig.java
 │   ├── decorator/
 │   │   ├── RequestDecoratorFactory.java
@@ -123,11 +125,12 @@ El cliente envía peticiones POST con este formato JSON:
     "param1": ["value1"],
     "param2": ["value2"]
   },
-  "body": { }
+  "body": {}
 }
 ```
 
 **Campos:**
+
 - `targetMethod`: Método HTTP real
 - `queryParams`: Parámetros de consulta (formato array)
 - `body`: Cuerpo de la petición
@@ -139,7 +142,7 @@ El cliente envía peticiones POST con este formato JSON:
 ```yaml
 server:
   port: ${PORT:8762}
-        
+
 eureka:
   instance:
     preferIpAddress: true
@@ -165,7 +168,7 @@ spring:
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
           globalcors:
             cors-configurations:
-              '[/**]':
+              "[/**]":
                 allowedOrigins: ${ALLOWED_ORIGINS:*}
                 allowedHeaders: "*"
                 allowedMethods:
@@ -179,7 +182,7 @@ management:
     web:
       exposure:
         include:
-          - '*'
+          - "*"
 ```
 
 ---
@@ -188,40 +191,40 @@ management:
 
 Con `discovery.locator.enabled: true`, el Gateway crea rutas automáticas:
 
-| Servicio Eureka | URL Gateway |
-|-----------------|-------------|
-| ms-books-catalogue | `http://localhost:8762/ms-books-catalogue/**` |
-| ms-books-payments | `http://localhost:8762/ms-books-payments/**` |
+| Microservicio      | URL Base en Gateway                  | Acceso Directo |
+| ------------------ | ------------------------------------ | -------------- |
+| ms-books-catalogue | `http://localhost:8762/api/books`    | puerto 8081    |
+| ms-books-payments  | `http://localhost:8762/api/payments` | puerto 8082    |
 
 ---
 
 ## 📝 Tabla de Transcripción - Catalogue
 
-| Operación | URL Gateway | targetMethod | queryParams | body |
-|-----------|-------------|--------------|-------------|------|
-| Listar libros | POST `/ms-books-catalogue/api/v1/books` | GET | null | null |
-| Buscar libros | POST `/ms-books-catalogue/api/v1/books` | GET | `{"author":["x"]}` | null |
-| Obtener libro | POST `/ms-books-catalogue/api/v1/books/1` | GET | null | null |
-| Crear libro | POST `/ms-books-catalogue/api/v1/books` | POST | null | BookDTO |
-| Actualizar | POST `/ms-books-catalogue/api/v1/books/1` | PUT | null | BookDTO |
-| Patch | POST `/ms-books-catalogue/api/v1/books/1` | PATCH | null | campos |
-| Eliminar | POST `/ms-books-catalogue/api/v1/books/1` | DELETE | null | null |
-| Disponibilidad | POST `/ms-books-catalogue/api/v1/books/1/availability` | GET | null | null |
-| Stock | POST `/ms-books-catalogue/api/v1/books/1/stock` | PATCH | null | `{"quantity":-1}` |
+| Operación      | URL Gateway                      | targetMethod | queryParams        | body           |
+| -------------- | -------------------------------- | ------------ | ------------------ | -------------- |
+| Listar libros  | POST `/api/books`                | GET          | {}                 | null           |
+| Buscar libros  | POST `/api/books/search`         | GET          | `{"author":["x"]}` | null           |
+| Obtener libro  | POST `/api/books/1`              | GET          | {}                 | null           |
+| Crear libro    | POST `/api/books`                | POST         | {}                 | BookRequestDTO |
+| Actualizar     | POST `/api/books/1`              | PUT          | {}                 | BookRequestDTO |
+| Patch          | POST `/api/books/1`              | PATCH        | {}                 | BookPatchDTO   |
+| Eliminar       | POST `/api/books/1`              | DELETE       | {}                 | null           |
+| Disponibilidad | POST `/api/books/1/availability` | GET          | {}                 | null           |
+| Stock          | POST `/api/books/1/stock`        | PATCH        | {}                 | StockUpdateDTO |
 
 ---
 
 ## 📝 Tabla de Transcripción - Payments
 
-| Operación | URL Gateway | targetMethod | queryParams | body |
-|-----------|-------------|--------------|-------------|------|
-| Listar | POST `/ms-books-payments/api/v1/payments` | GET | null | null |
-| Filtrar | POST `/ms-books-payments/api/v1/payments` | GET | `{"userId":["1"]}` | null |
-| Obtener | POST `/ms-books-payments/api/v1/payments/1` | GET | null | null |
-| Crear compra | POST `/ms-books-payments/api/v1/payments` | POST | null | PaymentDTO |
-| Actualizar | POST `/ms-books-payments/api/v1/payments/1` | PATCH | null | `{"status":"..."}` |
-| Cancelar | POST `/ms-books-payments/api/v1/payments/1` | DELETE | null | null |
-| Por usuario | POST `/ms-books-payments/api/v1/users/1/payments` | GET | null | null |
+| Operación    | URL Gateway                                       | targetMethod | queryParams        | body               |
+| ------------ | ------------------------------------------------- | ------------ | ------------------ | ------------------ |
+| Listar       | POST `/ms-books-payments/api/v1/payments`         | GET          | null               | null               |
+| Filtrar      | POST `/ms-books-payments/api/v1/payments`         | GET          | `{"userId":["1"]}` | null               |
+| Obtener      | POST `/ms-books-payments/api/v1/payments/1`       | GET          | null               | null               |
+| Crear compra | POST `/ms-books-payments/api/v1/payments`         | POST         | null               | PaymentDTO         |
+| Actualizar   | POST `/ms-books-payments/api/v1/payments/1`       | PATCH        | null               | `{"status":"..."}` |
+| Cancelar     | POST `/ms-books-payments/api/v1/payments/1`       | DELETE       | null               | null               |
+| Por usuario  | POST `/ms-books-payments/api/v1/users/1/payments` | GET          | null               | null               |
 
 ---
 
@@ -229,7 +232,7 @@ Con `discovery.locator.enabled: true`, el Gateway crea rutas automáticas:
 
 ### Ejemplo 1: Listar todos los libros
 
-**POST** `http://localhost:8762/ms-books-catalogue/api/v1/books`
+**POST** `http://localhost:8762/api/books`
 
 **Headers:** `Content-Type: application/json`
 
@@ -245,7 +248,7 @@ Con `discovery.locator.enabled: true`, el Gateway crea rutas automáticas:
 
 ### Ejemplo 2: Buscar libros con filtros
 
-**POST** `http://localhost:8762/ms-books-catalogue/api/v1/books`
+**POST** `http://localhost:8762/api/books`
 
 ```json
 {
@@ -263,7 +266,7 @@ Con `discovery.locator.enabled: true`, el Gateway crea rutas automáticas:
 
 ### Ejemplo 3: Crear un libro
 
-**POST** `http://localhost:8762/ms-books-catalogue/api/v1/books`
+**POST** `http://localhost:8762/api/books`
 
 ```json
 {
@@ -287,7 +290,7 @@ Con `discovery.locator.enabled: true`, el Gateway crea rutas automáticas:
 
 ### Ejemplo 4: Actualizar libro (PUT)
 
-**POST** `http://localhost:8762/ms-books-catalogue/api/v1/books/1`
+**POST** `http://localhost:8762/api/books/1`
 
 ```json
 {
@@ -311,7 +314,7 @@ Con `discovery.locator.enabled: true`, el Gateway crea rutas automáticas:
 
 ### Ejemplo 5: Actualizar parcial (PATCH)
 
-**POST** `http://localhost:8762/ms-books-catalogue/api/v1/books/1`
+**POST** `http://localhost:8762/api/books/1`
 
 ```json
 {
@@ -327,7 +330,7 @@ Con `discovery.locator.enabled: true`, el Gateway crea rutas automáticas:
 
 ### Ejemplo 6: Eliminar libro
 
-**POST** `http://localhost:8762/ms-books-catalogue/api/v1/books/1`
+**POST** `http://localhost:8762/api/books/1`
 
 ```json
 {
@@ -356,6 +359,7 @@ Con `discovery.locator.enabled: true`, el Gateway crea rutas automáticas:
 ```
 
 **Flujo interno:**
+
 1. Gateway → ms-books-payments (POST)
 2. ms-books-payments → ms-books-catalogue (GET /availability)
 3. ms-books-payments → ms-books-catalogue (PATCH /stock)
@@ -379,10 +383,10 @@ Con `discovery.locator.enabled: true`, el Gateway crea rutas automáticas:
 
 ## 📊 Endpoints de Monitoreo
 
-| Endpoint | Descripción |
-|----------|-------------|
-| `GET /actuator/health` | Estado del gateway |
-| `GET /actuator/gateway/routes` | Rutas registradas |
+| Endpoint                       | Descripción        |
+| ------------------------------ | ------------------ |
+| `GET /actuator/health`         | Estado del gateway |
+| `GET /actuator/gateway/routes` | Rutas registradas  |
 
 ---
 

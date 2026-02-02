@@ -1031,10 +1031,30 @@ public class BookController {
     // PUT /api/books/{id}
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody BookRequestDTO dto) {
-        // Validaciones
+        // Validación 1: título no vacío
         if (dto.getTitle() == null || dto.getTitle().isEmpty()) {
             return ResponseEntity.badRequest()
                 .body(new ErrorResponseDTO(400, "El título no puede estar vacío")); // 400
+        }
+        // Validación 2: autor no vacío
+        if (dto.getAuthor() == null || dto.getAuthor().isEmpty()) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "El autor no puede estar vacío")); // 400
+        }
+        // Validación 3: ISBN no vacío
+        if (dto.getIsbn() == null || dto.getIsbn().isEmpty()) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "El ISBN no puede estar vacío")); // 400
+        }
+        // Validación 4: precio positivo
+        if (dto.getPrice() == null || dto.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "El precio debe ser mayor a 0")); // 400
+        }
+        // Validación 5: stock no negativo
+        if (dto.getStock() == null || dto.getStock() < 0) {
+            return ResponseEntity.badRequest()
+                .body(new ErrorResponseDTO(400, "El stock no puede ser negativo")); // 400
         }
 
         BookResponseDTO updated = service.update(id, dto);
