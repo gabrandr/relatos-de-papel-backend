@@ -1131,7 +1131,7 @@ server:
 
 spring:
   application:
-    name: ms-books-catalogue
+    name: MS-BOOKS-CATALOGUE
 
   datasource:
     url: jdbc:h2:mem:catalogue_db

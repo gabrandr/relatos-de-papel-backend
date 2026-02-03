@@ -22,35 +22,65 @@ import com.relatosdepapel.ms_books_catalogue.dto.BookRequestDTO;
 @AllArgsConstructor // Genera el constructor con todos los atributos
 @Builder // Patron Builder
 public class Book {
+    /**
+     * Identificador único del libro
+     */
     @Id // Marca clave primaria
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Genera ID autoincrementable
     private Long id;
 
+    /**
+     * Título del libro
+     */
     @Column(name = Consts.TITLE, nullable = false)
     private String title;
 
+    /**
+     * Autor del libro
+     */
     @Column(name = Consts.AUTHOR, nullable = false)
     private String author;
 
+    /**
+     * Fecha de publicación del libro
+     */
     @Column(name = Consts.PUBLICATION_DATE)
     private LocalDate publicationDate;
 
+    /**
+     * Categoría o género del libro
+     */
     @Column(name = Consts.CATEGORY)
     private String category;
 
+    /**
+     * ISBN del libro (identificador único internacional)
+     */
     @Column(name = Consts.ISBN, unique = true, nullable = false)
     private String isbn;
 
+    /**
+     * Valoración del libro (escala de 1 a 5)
+     */
     @Column(name = Consts.RATING)
     private Integer rating;
 
+    /**
+     * Indica si el libro es visible en el catálogo (true) o está oculto (false)
+     */
     @Column(name = Consts.VISIBLE, nullable = false)
     private Boolean visible;
 
+    /**
+     * Cantidad disponible en inventario
+     */
     @Column(name = Consts.STOCK, nullable = false)
     private Integer stock;
 
-    @Column(name = Consts.PRICE, nullable = false)
+    /**
+     * Precio del libro (precision: 10 dígitos totales, scale: 2 decimales)
+     */
+    @Column(name = Consts.PRICE, nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
     // Metodo para actualizar Book desde un BookRequestDTO - no se actualiza el ID e

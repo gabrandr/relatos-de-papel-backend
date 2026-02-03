@@ -1,13 +1,15 @@
-package com.relatosdepapel.ms_books_catalogue.dto;
+package com.relatosdepapel.ms_books_payments.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 /**
- * DTO para actualizar el stock de un libro
- * Usado por ms-books-payments al procesar una compra
- * La cantidad puede ser positiva (aumentar) o negativa (decrementar)
+ * DTO para actualizar el stock de un libro en MS Books Catalogue
+ * PATCH http://MS-BOOKS-CATALOGUE/api/books/{id}/stock
+ * 
+ * Quantity positivo = incrementar stock
+ * Quantity negativo = decrementar stock
  */
 @Data
 @NoArgsConstructor

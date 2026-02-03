@@ -96,14 +96,14 @@ src/main/java/com/relatosdepapel/payments/
 
 ## 🔗 Tabla de Endpoints
 
-| Método HTTP | URI                               | Query Params           | Request Body      | Response Body           | Códigos            |
-| ----------- | --------------------------------- | ---------------------- | ----------------- | ----------------------- | ------------------ |
+| Método HTTP | URI                            | Query Params           | Request Body      | Response Body           | Códigos            |
+| ----------- | ------------------------------ | ---------------------- | ----------------- | ----------------------- | ------------------ |
 | POST        | `/api/payments`                | N/A                    | PaymentRequestDTO | PaymentResponseDTO      | 201, 400, 404, 409 |
 | GET         | `/api/payments/{id}`           | N/A                    | N/A               | PaymentResponseDTO      | 200, 404           |
 | GET         | `/api/payments`                | userId, bookId, status | N/A               | List                    | 200                |
-| GET         | `/api/v1/users/{userId}/payments` | status                 | N/A               | UserPaymentsResponseDTO | 200                |
+| GET         | `/api/users/{userId}/payments` | status                 | N/A               | UserPaymentsResponseDTO | 200                |
 | PATCH       | `/api/payments/{id}`           | N/A                    | PaymentStatusDTO  | PaymentResponseDTO      | 200, 400, 404      |
-| DELETE      | `/api/payments/{id}`           | N/A                    | N/A               | Boolean                 | 200, 404, 409      |
+| DELETE      | `/api/payments/{id}`           | N/A                    | N/A               | Void                    | 204, 404, 409      |
 
 ---
 
@@ -117,9 +117,9 @@ src/main/java/com/relatosdepapel/payments/
 
 ```
 1. Recibe: POST /api/payments {userId, bookId, quantity}
-2. Llama: GET http://ms-books-catalogue/api/v1/books/{bookId}/availability
+2. Llama: GET http://MS-BOOKS-CATALOGUE/api/books/{bookId}/availability
 3. Verifica: existe, visible=true, stock >= quantity
-4. Llama: PATCH http://ms-books-catalogue/api/v1/books/{bookId}/stock {quantity: -N}
+4. Llama: PATCH http://MS-BOOKS-CATALOGUE/api/books/{bookId}/stock {quantity: -N}
 5. Guarda: Payment en payments_db
 6. Retorna: PaymentResponseDTO
 ```
@@ -232,7 +232,7 @@ src/main/java/com/relatosdepapel/payments/
 
 ---
 
-### GET /api/v1/users/{userId}/payments - Compras de un usuario
+### GET /api/users/{userId}/payments - Compras de un usuario
 
 **Response 200 OK (UserPaymentsResponseDTO):**
 
@@ -275,17 +275,11 @@ src/main/java/com/relatosdepapel/payments/
 
 ### DELETE /api/payments/{id} - Cancelar compra
 
-**Response 200 OK:**
+**Response 204 No Content:**
 
-```json
-true
-```
+(sin body)
 
-**Response 404 Not Found:**
-
-```json
-false
-```
+**Response 404 Not Found:** (sin body)
 
 **Response 409 Conflict:**
 
@@ -633,14 +627,14 @@ public class BookCatalogueClient {
     private final RestTemplate restTemplate;
 
     // ⚠️ CRÍTICO: Usar nombre de servicio Eureka, NO IP ni puerto
-    private static final String CATALOGUE_SERVICE_URL = "http://ms-books-catalogue";
+    private static final String CATALOGUE_SERVICE_URL = "http://MS-BOOKS-CATALOGUE";
 
     /**
      * Verifica disponibilidad de un libro
      * @return BookAvailabilityDTO o null si no existe
      */
     public BookAvailabilityDTO checkAvailability(Long bookId) {
-        String url = CATALOGUE_SERVICE_URL + "/api/v1/books/" + bookId + "/availability";
+        String url = CATALOGUE_SERVICE_URL + "/api/books/" + bookId + "/availability";
 
         try {
             return restTemplate.getForObject(url, BookAvailabilityDTO.class);
@@ -653,7 +647,7 @@ public class BookCatalogueClient {
      * Decrementa el stock de un libro
      */
     public void decrementStock(Long bookId, Integer quantity) {
-        String url = CATALOGUE_SERVICE_URL + "/api/v1/books/" + bookId + "/stock";
+        String url = CATALOGUE_SERVICE_URL + "/api/books/" + bookId + "/stock";
         StockUpdateDTO request = new StockUpdateDTO(-quantity);
         restTemplate.patchForObject(url, request, Void.class);
     }
@@ -662,7 +656,7 @@ public class BookCatalogueClient {
      * Restaura el stock de un libro (cuando se cancela compra)
      */
     public void restoreStock(Long bookId, Integer quantity) {
-        String url = CATALOGUE_SERVICE_URL + "/api/v1/books/" + bookId + "/stock";
+        String url = CATALOGUE_SERVICE_URL + "/api/books/" + bookId + "/stock";
         StockUpdateDTO request = new StockUpdateDTO(quantity);
         restTemplate.patchForObject(url, request, Void.class);
     }
@@ -902,7 +896,7 @@ public class PaymentController {
         return ResponseEntity.ok(payment); // 200
     }
 
-    // GET /api/v1/users/{userId}/payments
+    // GET /api/users/{userId}/payments
     @GetMapping("/users/{userId}/payments")
     public ResponseEntity<UserPaymentsResponseDTO> getByUserId(
             @PathVariable Long userId,
@@ -1018,7 +1012,7 @@ server:
 
 spring:
   application:
-    name: ms-books-payments
+    name: MS-BOOKS-PAYMENTS
 
   datasource:
     url: jdbc:h2:mem:payments_db

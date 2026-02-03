@@ -1,20 +1,19 @@
-package com.relatosdepapel.ms_books_catalogue.dto;
+package com.relatosdepapel.ms_books_payments.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import lombok.AllArgsConstructor;
 import java.math.BigDecimal;
 
-import lombok.AllArgsConstructor;
-
 /**
- * DTO para verificar disponibilidad de un libro
- * Usado por ms-books-payments antes de procesar un pago
+ * DTO que recibe la respuesta del endpoint de disponibilidad de MS Books
+ * Catalogue
+ * GET http://MS-BOOKS-CATALOGUE/api/books/{id}/availability
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AvailabilityResponseDTO {
+public class BookAvailabilityDTO {
     /** ID del libro */
     private Long id;
 
@@ -27,12 +26,9 @@ public class AvailabilityResponseDTO {
     /** Disponibilidad real (true si visible=true Y stock>0) */
     private Boolean available;
 
-    /** Visibilidad en el catálogo */
-    private Boolean visible;
-
     /** Stock actual disponible */
     private Integer stock;
 
-    /** Precio del libro */
+    /** Precio actual del libro */
     private BigDecimal price;
 }

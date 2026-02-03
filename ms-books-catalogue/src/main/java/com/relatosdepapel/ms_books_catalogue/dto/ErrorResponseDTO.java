@@ -12,6 +12,9 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ErrorResponseDTO {
+    /** Código HTTP del error (400, 404, 409, etc.) */
     private Integer code;
+
+    /** Mensaje descriptivo del error */
     private String message;
 }
