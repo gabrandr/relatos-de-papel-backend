@@ -205,15 +205,38 @@ src/main/java/com/relatosdepapel/payments/
 
 ---
 
-### GET /api/payments - Listar compras con filtros
+### GET /api/payments - Listar todas las compras
 
-**Query Parameters:**
+**Response 200 OK:**
 
-| Parámetro | Tipo   | Descripción         |
-| --------- | ------ | ------------------- |
-| `userId`  | Long   | Filtrar por usuario |
-| `bookId`  | Long   | Filtrar por libro   |
-| `status`  | String | Filtrar por estado  |
+```json
+[
+  {
+    "id": 1,
+    "userId": 123,
+    "bookId": 1,
+    "bookTitle": "El Quijote",
+    "quantity": 2,
+    "totalPrice": 39.98,
+    "status": "COMPLETED",
+    "purchaseDate": "2024-01-15T14:30:00"
+  }
+]
+```
+
+---
+
+### GET /api/payments/search - Buscar compras con filtros
+
+> ⚠️ **Nota:** Similar a MS Catalogue, las búsquedas dinámicas usan endpoint `/search` con `@RequestParam`.
+
+**Query Parameters (todos opcionales):**
+
+| Parámetro | Tipo   | Descripción                                       |
+| --------- | ------ | ------------------------------------------------- |
+| `userId`  | Long   | Filtrar por usuario                               |
+| `bookId`  | Long   | Filtrar por libro                                 |
+| `status`  | String | Filtrar por estado (PENDING, APPROVED, CANCELLED) |
 
 **Response 200 OK:**
 
