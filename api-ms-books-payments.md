@@ -98,14 +98,14 @@ src/main/java/com/relatosdepapel/payments/
 
 ## 🔗 Tabla de Endpoints
 
-| Método HTTP | URI                            | Query Params           | Request Body      | Response Body           | Códigos            |
-| ----------- | ------------------------------ | ---------------------- | ----------------- | ----------------------- | ------------------ |
-| POST        | `/api/payments`                | N/A                    | PaymentRequestDTO | PaymentResponseDTO      | 201, 400, 404, 409 |
-| GET         | `/api/payments/{id}`           | N/A                    | N/A               | PaymentResponseDTO      | 200, 404           |
-| GET         | `/api/payments`                | userId, bookId, status | N/A               | List                    | 200                |
-| GET         | `/api/users/{userId}/payments` | status                 | N/A               | UserPaymentsResponseDTO | 200                |
-| PATCH       | `/api/payments/{id}`           | N/A                    | PaymentStatusDTO  | PaymentResponseDTO      | 200, 400, 404      |
-| DELETE      | `/api/payments/{id}`           | N/A                    | N/A               | Void                    | 204, 404, 409      |
+| Método HTTP | URI                  | Query Params           | Request Body      | Response Body      | Códigos            |
+| ----------- | -------------------- | ---------------------- | ----------------- | ------------------ | ------------------ |
+| POST        | `/api/payments`      | N/A                    | PaymentRequestDTO | PaymentResponseDTO | 201, 400, 404, 409 |
+| GET         | `/api/payments/{id}` | N/A                    | N/A               | PaymentResponseDTO | 200, 404           |
+| GET         | `/api/payments`      | userId, bookId, status | N/A               | List               | 200                |
+
+| PATCH | `/api/payments/{id}` | N/A | PaymentStatusDTO | PaymentResponseDTO | 200, 400, 404 |
+| DELETE | `/api/payments/{id}` | N/A | N/A | Void | 204, 404, 409 |
 
 ---
 
