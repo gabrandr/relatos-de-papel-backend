@@ -8,6 +8,7 @@ import com.relatosdepapel.ms_books_payments.specification.PaymentSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -139,22 +140,81 @@ public class PaymentServiceImpl implements PaymentService {
         return toResponseDTO(savedPayment);
     }
 
+    /**
+     * Actualiza el estado de un pago.
+     * 
+     * @param id  ID del pago
+     * @param dto Nuevo estado
+     * @return PaymentResponseDTO actualizado
+     * @throws RuntimeException si el pago no existe
+     */
     @Override
     public PaymentResponseDTO updateStatus(Long id, PaymentStatusDTO dto) {
-        // TODO: Etapa 7
-        return null;
+        // Buscar el pago
+        Payment payment = paymentRepository.getById(id);
+        if (payment == null) {
+            throw new RuntimeException("Pago no encontrado con ID: " + id);
+        }
+        // Actualizar estado
+        payment.setStatus(dto.getStatus());
+        // Guardar cambios
+        Payment updatedPayment = paymentRepository.save(payment);
+        // Retornar DTO
+        return toResponseDTO(updatedPayment);
     }
 
+    /**
+     * Cancela un pago y restaura el stock si es necesario.
+     * 
+     * @param id ID del pago a cancelar
+     * @return true si se canceló correctamente
+     * @throws RuntimeException si el pago no existe o falla la restauración de
+     *                          stock
+     */
     @Override
     public boolean cancelPayment(Long id) {
-        // TODO: Etapa 8
-        return false;
+        // Buscar el pago
+        Payment payment = paymentRepository.getById(id);
+        if (payment == null) {
+            throw new RuntimeException("Pago no encontrado con ID: " + id);
+        }
+        // Si ya está cancelado, no hacer nada
+        if ("CANCELLED".equals(payment.getStatus())) {
+            return false;
+        }
+        // Restaurar stock en MS Catalogue (solo si ya se había descontado lo lógico)
+        // Asumimos que PENDING y APPROVED ya descontaron stock al crearse
+        try {
+            catalogueClient.restoreStock(payment.getBookId(), payment.getQuantity());
+        } catch (Exception e) {
+            // Si falla la restauración, no podemos cancelar el pago (inconsistencia)
+            throw new RuntimeException(
+                    "Error al restaurar el stock. No se puede cancelar el pago. Error: " + e.getMessage());
+        }
+        // Actualizar estado a CANCELLED
+        payment.setStatus("CANCELLED");
+        paymentRepository.save(payment);
+        return true;
     }
 
+    /**
+     * Busca pagos con filtros dinámicos usando Specifications.
+     * 
+     * @param userId ID del usuario (opcional)
+     * @param bookId ID del libro (opcional)
+     * @param status Estado del pago (opcional)
+     * @return Lista de pagos que cumplen con los filtros
+     */
     @Override
     public List<PaymentResponseDTO> search(Long userId, Long bookId, String status) {
-        // TODO: Etapa 9
-        return null;
+        // Construir la Specification usando el método estático que creamos
+        Specification<Payment> spec = PaymentSpecification.filterBy(userId, bookId, status);
+        // Ejecutar la búsqueda en la BD usando el Repository
+        List<Payment> payments = paymentRepository.search(spec);
+        // Convertir a DTOs
+        return payments.stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
     // MÉTODOS HELPER
 

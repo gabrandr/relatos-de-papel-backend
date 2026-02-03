@@ -89,4 +89,18 @@ public class PaymentSpecification {
             return criteriaBuilder.lessThanOrEqualTo(root.get(Consts.PURCHASE_DATE), date);
         };
     }
+
+    /**
+     * Combina los filtros opcionales usando AND.
+     * 
+     * @param userId ID del usuario
+     * @param bookId ID del libro
+     * @param status Estado del pago
+     * @return Specification combinada
+     */
+    public static Specification<Payment> filterBy(Long userId, Long bookId, String status) {
+        return Specification.where(hasUserId(userId))
+                .and(hasBookId(bookId))
+                .and(hasStatus(status));
+    }
 }
