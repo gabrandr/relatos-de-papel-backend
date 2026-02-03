@@ -12,7 +12,7 @@
 | **Puerto**        | 8081                                 |
 | **Base URL**      | `/api/books`                         |
 | **Base de Datos** | catalogue_db (H2 o MySQL/PostgreSQL) |
-| **Nombre Eureka** | ms-books-catalogue                   |
+| **Nombre Eureka** | MS-BOOKS-CATALOGUE                   |
 
 ---
 
@@ -54,6 +54,8 @@ src/main/java/com/relatosdepapel/catalogue/
 ├── repository/
 │   ├── BookJpaRepository.java        ← Interface JPA
 │   └── BookRepository.java           ← Wrapper
+├── specification/
+│   └── BookSpecification.java        ← Filtros dinámicos (Criteria API)
 ├── entity/
 │   └── Book.java
 ├── dto/

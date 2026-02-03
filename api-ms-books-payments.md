@@ -12,7 +12,7 @@
 | **Puerto**        | 8082                                                               |
 | **Base URL**      | `/api/payments`                                                    |
 | **Base de Datos** | payments_db (H2 o MySQL/PostgreSQL) - **DIFERENTE a catalogue_db** |
-| **Nombre Eureka** | ms-books-payments                                                  |
+| **Nombre Eureka** | MS-BOOKS-PAYMENTS                                                  |
 | **Dependencia**   | Consume API de ms-books-catalogue vía Eureka (sin IP ni puerto)    |
 
 ---
@@ -55,6 +55,8 @@ src/main/java/com/relatosdepapel/payments/
 ├── repository/
 │   ├── PaymentJpaRepository.java     ← Interface JPA
 │   └── PaymentRepository.java        ← Wrapper
+├── specification/
+│   └── PaymentSpecification.java     ← Filtros dinámicos (Criteria API)
 ├── entity/
 │   └── Payment.java
 ├── dto/
@@ -66,9 +68,9 @@ src/main/java/com/relatosdepapel/payments/
 │   ├── UserPaymentsResponseDTO.java
 │   └── ErrorResponseDTO.java
 ├── client/
-│   └── BookCatalogueClient.java
+│   └── BookCatalogueClient.java      ← Cliente HTTP para MS Catalogue
 ├── config/
-│   └── RestTemplateConfig.java
+│   └── RestTemplateConfig.java       ← Configuración @LoadBalanced
 └── utils/
     └── Consts.java                   ← Constantes (nombres de columnas)
 ```
