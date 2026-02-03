@@ -66,10 +66,77 @@ public class PaymentServiceImpl implements PaymentService {
         return toUserPaymentsDTO(userId, payments);
     }
 
+    /**
+     * Crea un nuevo pago.
+     * 
+     * @param dto Datos del pago a crear (userId, bookId, quantity)
+     * @return PaymentResponseDTO del pago creado
+     * @throws IllegalArgumentException si los datos son inválidos o stock
+     *                                  insuficiente
+     * @throws RuntimeException         si el libro no existe o servicio no
+     *                                  disponible
+     */
     @Override
     public PaymentResponseDTO create(PaymentRequestDTO dto) {
-        // TODO: Etapas 4, 5 y 6 (el más complejo, lo haremos en 3 partes)
-        return null;
+        // Validación 1: userId debe ser mayor a 0
+        if (dto.getUserId() == null || dto.getUserId() <= 0) {
+            throw new IllegalArgumentException("userId debe ser mayor a 0");
+        }
+
+        // Validación 2: bookId debe ser mayor a 0
+        if (dto.getBookId() == null || dto.getBookId() <= 0) {
+            throw new IllegalArgumentException("bookId debe ser mayor a 0");
+        }
+
+        // Validación 3: quantity debe ser mayor a 0
+        if (dto.getQuantity() == null || dto.getQuantity() <= 0) {
+            throw new IllegalArgumentException("quantity debe ser mayor a 0");
+        }
+
+        // 1. Llamar a MS Catalogue para verificar disponibilidad
+        BookAvailabilityDTO book;
+        try {
+            book = catalogueClient.checkAvailability(dto.getBookId());
+        } catch (Exception e) {
+            // Si el libro no existe (404) o hay error de conexión
+            throw new IllegalArgumentException(
+                    "El libro con ID " + dto.getBookId() + " no fue encontrado o el servicio no está disponible");
+        }
+        // 2. Validar que el libro esté marcado como visible/disponible
+        if (Boolean.FALSE.equals(book.getAvailable())) {
+            throw new IllegalArgumentException("El libro '" + book.getTitle() + "' no está disponible para la venta");
+        }
+        // 3. Validar Stock suficiente
+        if (book.getStock() < dto.getQuantity()) {
+            throw new IllegalArgumentException("Stock insuficiente para el libro '" + book.getTitle() +
+                    "'. Solicitado: " + dto.getQuantity() + ", Disponible: " + book.getStock());
+        }
+        // Usar datos REALES del libro
+        String bookTitle = book.getTitle();
+        String bookIsbn = book.getIsbn();
+        BigDecimal unitPrice = book.getPrice();
+
+        // Usar el helper toEntity() para crear el Payment
+        Payment payment = toEntity(dto, bookTitle, bookIsbn, unitPrice);
+
+        // Guardar en la base de datos
+        Payment savedPayment = paymentRepository.save(payment);
+
+        // Decremento del stock en MS Catalogue
+        try {
+            // Llamar a MS Catalogue para restar el stock
+            catalogueClient.decrementStock(dto.getBookId(), dto.getQuantity());
+        } catch (Exception e) {
+            // FALLÓ LA ACTUALIZACIÓN DE STOCK
+            // ROLLBACK MANUAL: Borrar el pago que acabamos de crear para no dejar datos
+            // inconsistentes
+            paymentRepository.delete(savedPayment.getId());
+
+            throw new RuntimeException(
+                    "Error al actualizar el stock. Se ha cancelado el pago. Error: " + e.getMessage());
+        }
+        // Si todo salió bien, retornamos el pago creado
+        return toResponseDTO(savedPayment);
     }
 
     @Override
