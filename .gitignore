@@ -17,3 +17,6 @@
 # Temporary files
 *.tmp
 .cache/
+
+# Maven
+target/

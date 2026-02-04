@@ -4,6 +4,7 @@ import com.relatosdepapel.ms_books_payments.dto.ErrorResponseDTO;
 import com.relatosdepapel.ms_books_payments.dto.PaymentRequestDTO;
 import com.relatosdepapel.ms_books_payments.dto.PaymentResponseDTO;
 import com.relatosdepapel.ms_books_payments.dto.PaymentStatusDTO;
+import com.relatosdepapel.ms_books_payments.exception.BookNotFoundException;
 import com.relatosdepapel.ms_books_payments.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -71,6 +72,7 @@ public class PaymentController {
      * @param dto Datos del pago a crear
      * @return 201 Created con el pago creado
      *         400 Bad Request si hay error de validación
+     *         404 Not Found si el libro no existe
      *         500 Internal Server Error si hay error inesperado
      */
     @PostMapping
@@ -96,14 +98,17 @@ public class PaymentController {
         try {
             PaymentResponseDTO createdPayment = paymentService.create(dto);
             return ResponseEntity.status(201).body(createdPayment);
+        } catch (BookNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponseDTO(404, "Libro no encontrado"));
         } catch (IllegalArgumentException e) {
             // Captura validaciones de negocio del servicio (ej: Stock insuficiente)
             return ResponseEntity.badRequest()
-                    .body(new ErrorResponseDTO(400, e.getMessage()));
+                    .body(new ErrorResponseDTO(400, "No fue posible crear el pago"));
         } catch (RuntimeException e) {
             // Captura errores inesperados o de conexión con otros MS
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponseDTO(500, e.getMessage()));
+                    .body(new ErrorResponseDTO(500, "Error interno al procesar la compra"));
         }
     }
 
@@ -115,7 +120,6 @@ public class PaymentController {
      * @param dto Nuevo estado
      * @return 200 OK con el pago actualizado
      *         404 Not Found si no existe
-     *         500 Internal Server Error si falla
      */
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateStatus(
@@ -144,7 +148,8 @@ public class PaymentController {
      * @param id ID del pago a cancelar
      * @return 204 No Content si se canceló correctamente
      *         404 Not Found si el pago no existe
-     *         409 Conflict si ya estaba cancelado / error de stock
+     *         409 Conflict si ya estaba cancelado
+     *         500 Internal Server Error si falla
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> cancel(@PathVariable Long id) {
@@ -166,7 +171,7 @@ public class PaymentController {
         } catch (RuntimeException e) {
             // Error al restaurar stock (inconsistencia grave)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponseDTO(500, e.getMessage()));
+                    .body(new ErrorResponseDTO(500, "No se pudo cancelar el pago"));
         }
     }
 }

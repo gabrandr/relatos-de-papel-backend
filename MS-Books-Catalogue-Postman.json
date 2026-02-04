@@ -237,6 +237,27 @@
           }
         },
         {
+          "name": "SEARCH - Visible False",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetMethod\": \"GET\",\n  \"queryParams\": {\n    \"visible\": [\"false\"]\n  },\n  \"body\": null\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/books/search",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "books", "search"]
+            }
+          }
+        },
+        {
           "name": "GET Book Availability",
           "request": {
             "method": "POST",
@@ -343,6 +364,132 @@
               "raw": "{{gateway_url}}/api/books",
               "host": ["{{gateway_url}}"],
               "path": ["api", "books"]
+            }
+          }
+        },
+        {
+          "name": "POST - Duplicate ISBN (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetMethod\": \"POST\",\n  \"queryParams\": {},\n  \"body\": {\n    \"title\": \"Libro Duplicado\",\n    \"author\": \"Autor\",\n    \"category\": \"Test\",\n    \"isbn\": \"9788467033601\",\n    \"price\": 10.00,\n    \"stock\": 5,\n    \"visible\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/books",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "books"]
+            }
+          }
+        },
+        {
+          "name": "GET - Not Found (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetMethod\": \"GET\",\n  \"queryParams\": {},\n  \"body\": null\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/books/9999",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "books", "9999"]
+            }
+          }
+        },
+        {
+          "name": "PUT - Not Found (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetMethod\": \"PUT\",\n  \"queryParams\": {},\n  \"body\": {\n    \"title\": \"Libro Inexistente\",\n    \"author\": \"Autor\",\n    \"category\": \"Test\",\n    \"isbn\": \"9999999999\",\n    \"price\": 12.00,\n    \"stock\": 5,\n    \"rating\": 4,\n    \"visible\": true,\n    \"publicationDate\": \"2000-01-01\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/books/9999",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "books", "9999"]
+            }
+          }
+        },
+        {
+          "name": "PATCH - Not Found (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetMethod\": \"PATCH\",\n  \"queryParams\": {},\n  \"body\": {\n    \"price\": 10.00\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/books/9999",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "books", "9999"]
+            }
+          }
+        },
+        {
+          "name": "DELETE - Not Found (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetMethod\": \"DELETE\",\n  \"queryParams\": {},\n  \"body\": null\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/books/9999",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "books", "9999"]
+            }
+          }
+        },
+        {
+          "name": "PUT - Invalid (Negative Price)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetMethod\": \"PUT\",\n  \"queryParams\": {},\n  \"body\": {\n    \"title\": \"Libro Test\",\n    \"author\": \"Autor\",\n    \"category\": \"Test\",\n    \"isbn\": \"9788467033601\",\n    \"price\": -1.00,\n    \"stock\": 5,\n    \"rating\": 4,\n    \"visible\": true,\n    \"publicationDate\": \"2000-01-01\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/books/1",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "books", "1"]
             }
           }
         },

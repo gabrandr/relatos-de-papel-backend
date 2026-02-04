@@ -3,11 +3,13 @@ package com.relatosdepapel.ms_books_payments.service;
 import com.relatosdepapel.ms_books_payments.client.BookCatalogueClient;
 import com.relatosdepapel.ms_books_payments.dto.*;
 import com.relatosdepapel.ms_books_payments.entity.Payment;
+import com.relatosdepapel.ms_books_payments.exception.BookNotFoundException;
 import com.relatosdepapel.ms_books_payments.repository.PaymentRepository;
 import com.relatosdepapel.ms_books_payments.specification.PaymentSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -97,10 +99,15 @@ public class PaymentServiceImpl implements PaymentService {
         BookAvailabilityDTO book;
         try {
             book = catalogueClient.checkAvailability(dto.getBookId());
+        } catch (HttpClientErrorException.NotFound e) {
+            // Libro no existe en catálogo
+            throw new BookNotFoundException("El libro con ID " + dto.getBookId() + " no existe");
+        } catch (HttpClientErrorException e) {
+            // Error 4xx distinto de 404
+            throw new IllegalArgumentException("No fue posible validar el libro solicitado");
         } catch (Exception e) {
-            // Si el libro no existe (404) o hay error de conexión
-            throw new IllegalArgumentException(
-                    "El libro con ID " + dto.getBookId() + " no fue encontrado o el servicio no está disponible");
+            // Error de conexión u otros fallos
+            throw new RuntimeException("El servicio de catálogo no está disponible");
         }
         // 2. Validar que el libro esté marcado como visible/disponible
         if (Boolean.FALSE.equals(book.getAvailable())) {
@@ -262,7 +269,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .unitPrice(unitPrice)
                 .totalPrice(totalPrice)
                 .purchaseDate(LocalDateTime.now())
-                .status("PENDING")
+                .status("COMPLETED")
                 .build();
     }
 
