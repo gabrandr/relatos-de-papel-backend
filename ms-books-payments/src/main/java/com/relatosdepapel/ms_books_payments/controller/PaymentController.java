@@ -4,6 +4,7 @@ import com.relatosdepapel.ms_books_payments.dto.ErrorResponseDTO;
 import com.relatosdepapel.ms_books_payments.dto.PaymentRequestDTO;
 import com.relatosdepapel.ms_books_payments.dto.PaymentResponseDTO;
 import com.relatosdepapel.ms_books_payments.dto.PaymentStatusDTO;
+import com.relatosdepapel.ms_books_payments.exception.BookNotFoundException;
 import com.relatosdepapel.ms_books_payments.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -71,6 +72,7 @@ public class PaymentController {
      * @param dto Datos del pago a crear
      * @return 201 Created con el pago creado
      *         400 Bad Request si hay error de validación
+     *         404 Not Found si el libro no existe
      *         500 Internal Server Error si hay error inesperado
      */
     @PostMapping
@@ -96,6 +98,9 @@ public class PaymentController {
         try {
             PaymentResponseDTO createdPayment = paymentService.create(dto);
             return ResponseEntity.status(201).body(createdPayment);
+        } catch (BookNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponseDTO(404, "Libro no encontrado"));
         } catch (IllegalArgumentException e) {
             // Captura validaciones de negocio del servicio (ej: Stock insuficiente)
             return ResponseEntity.badRequest()

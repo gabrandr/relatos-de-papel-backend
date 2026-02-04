@@ -75,7 +75,7 @@ A continuación se detallan las operaciones disponibles en cada microservicio, s
 
 | Método HTTP | URI                    | Query Params           | Request Body      | Response Body      | Códigos            |
 | ----------- | ---------------------- | ---------------------- | ----------------- | ------------------ | ------------------ |
-| POST        | `/api/payments`        | N/A                    | PaymentRequestDTO | PaymentResponseDTO | 201, 400, 500      |
+| POST        | `/api/payments`        | N/A                    | PaymentRequestDTO | PaymentResponseDTO | 201, 400, 404, 500 |
 | GET         | `/api/payments/{id}`   | N/A                    | N/A               | PaymentResponseDTO | 200, 404           |
 | GET         | `/api/payments`        | N/A                    | N/A               | List<Payment...>   | 200                |
 | GET         | `/api/payments/search` | userId, bookId, status | N/A               | List<Payment...>   | 200                |
