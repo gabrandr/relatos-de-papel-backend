@@ -15,12 +15,27 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookPatchDTO {
+    /** Título del libro (opcional) */
     private String title;
+
+    /** Autor del libro (opcional) */
     private String author;
+
+    /** Fecha de publicación (opcional) */
     private LocalDate publicationDate;
+
+    /** Categoría o género (opcional) */
     private String category;
+
+    /** Valoración (escala de 1 a 5, opcional) */
     private Integer rating;
+
+    /** Visibilidad en el catálogo (opcional) */
     private Boolean visible;
+
+    /** Cantidad disponible en inventario (opcional) */
     private Integer stock;
+
+    /** Precio del libro (opcional) */
     private BigDecimal price;
 }

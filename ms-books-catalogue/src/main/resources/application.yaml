@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: ms-books-catalogue #Nombre del microservicio
+    name: MS-BOOKS-CATALOGUE #Nombre del microservicio
 
   datasource:
     url: jdbc:h2:mem:catalogue_db #Nombre de la base de datos

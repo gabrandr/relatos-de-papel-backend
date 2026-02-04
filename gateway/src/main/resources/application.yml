@@ -29,6 +29,11 @@ spring:
               uri: lb://MS-BOOKS-CATALOGUE
               predicates:
                 - Path=/api/books/**
+            # Ruta explícita para MS Books Payments
+            - id: ms-books-payments
+              uri: lb://MS-BOOKS-PAYMENTS
+              predicates:
+                - Path=/api/payments/**
       globalcors:
         cors-configurations:
           "[/**]":

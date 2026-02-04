@@ -13,5 +13,10 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StockUpdateDTO {
-    private Integer quantity; // Ejemplo: -2 para decrementar 2 unidades
+    /**
+     * Cantidad a sumar/restar del stock
+     * Positivo: incrementar (ej: 5 → stock + 5)
+     * Negativo: decrementar (ej: -2 → stock - 2)
+     */
+    private Integer quantity;
 }

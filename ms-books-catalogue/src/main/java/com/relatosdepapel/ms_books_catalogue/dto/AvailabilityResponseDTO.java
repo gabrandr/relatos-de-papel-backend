@@ -15,11 +15,24 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AvailabilityResponseDTO {
+    /** ID del libro */
     private Long id;
+
+    /** Título del libro */
     private String title;
+
+    /** ISBN del libro */
     private String isbn;
-    private Boolean available; // true si visible=true Y stock>0
+
+    /** Disponibilidad real (true si visible=true Y stock>0) */
+    private Boolean available;
+
+    /** Visibilidad en el catálogo */
     private Boolean visible;
+
+    /** Stock actual disponible */
     private Integer stock;
+
+    /** Precio del libro */
     private BigDecimal price;
 }
