@@ -262,7 +262,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .unitPrice(unitPrice)
                 .totalPrice(totalPrice)
                 .purchaseDate(LocalDateTime.now())
-                .status("PENDING")
+                .status("COMPLETED")
                 .build();
     }
 

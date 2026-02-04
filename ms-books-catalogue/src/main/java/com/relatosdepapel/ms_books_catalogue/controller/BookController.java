@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.time.LocalDate;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -104,8 +105,14 @@ public class BookController {
             return ResponseEntity.badRequest()
                     .body(new ErrorResponseDTO(400, "El stock no puede ser negativo"));
         }
-        BookResponseDTO createdBook = bookService.create(dto); // crea el libro
-        return ResponseEntity.status(201).body(createdBook); // 201 Created
+        try {
+            BookResponseDTO createdBook = bookService.create(dto); // crea el libro
+            return ResponseEntity.status(201).body(createdBook); // 201 Created
+        } catch (IllegalArgumentException e) {
+            // ISBN duplicado u otra validación de negocio
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponseDTO(409, "El ISBN ya existe"));
+        }
     }
 
     // PUT ENDPOINT

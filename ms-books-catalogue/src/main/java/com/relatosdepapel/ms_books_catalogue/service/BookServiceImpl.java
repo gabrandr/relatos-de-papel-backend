@@ -36,8 +36,10 @@ public class BookServiceImpl implements BookService {
      */
     @Override
     public List<BookResponseDTO> getAll() {
-        // convertir la lista de entidades a DTOs
-        return bookRepository.getAll().stream().map(this::toResponseDTO).toList();
+        // devolver solo libros visibles
+        return bookRepository.findVisibleBooks().stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
 
     /**

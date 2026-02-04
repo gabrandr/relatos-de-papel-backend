@@ -34,6 +34,7 @@ Es el **único punto de entrada** para cualquier cliente (Postman, Frontend, Usu
 
 - **Función de Tunneling (Request Translation):**
   Para cumplir con requisitos de seguridad y compatibilidad, el Gateway intercepta todas las peticiones **POST** y, basándose en la estructura del cuerpo, las transforma en la petición HTTP real que el microservicio necesita (GET, PUT, PATCH, DELETE).
+- **Importante:** El Gateway **solo acepta POST**. El método real se envía en el body mediante `GatewayRequest.targetMethod`.
 
 ### 3. Comunicación Inter-Servicios
 
@@ -54,7 +55,7 @@ A continuación se detallan las operaciones disponibles en cada microservicio, s
 
 | Método HTTP | URI                            | Query Params                                                                                                                       | Request Body   | Response Body           | Códigos       |
 | ----------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | -------------- | ----------------------- | ------------- |
-| POST        | `/api/books`                   | N/A                                                                                                                                | BookRequestDTO | BookResponseDTO         | 201, 400      |
+| POST        | `/api/books`                   | N/A                                                                                                                                | BookRequestDTO | BookResponseDTO         | 201, 400, 409 |
 | GET         | `/api/books`                   | N/A                                                                                                                                | N/A            | List<BookResponseDTO>   | 200           |
 | GET         | `/api/books/search`            | title, author, category, isbn, ratingMin, ratingMax, visible, minPrice, maxPrice, minStock, publicationDateFrom, publicationDateTo | N/A            | List<BookResponseDTO>   | 200           |
 | GET         | `/api/books/{id}`              | N/A                                                                                                                                | N/A            | BookResponseDTO         | 200, 404      |
@@ -64,6 +65,8 @@ A continuación se detallan las operaciones disponibles en cada microservicio, s
 | GET         | `/api/books/{id}/availability` | N/A                                                                                                                                | N/A            | AvailabilityResponseDTO | 200, 404      |
 | PATCH       | `/api/books/{id}/stock`        | N/A                                                                                                                                | StockUpdateDTO | BookResponseDTO         | 200, 400, 404 |
 
+> **Nota:** `GET /api/books` devuelve **solo libros visibles** (`visible=true`).
+
 ---
 
 ### 💳 Microservicio Operador (ms-books-payments)
@@ -72,12 +75,14 @@ A continuación se detallan las operaciones disponibles en cada microservicio, s
 
 | Método HTTP | URI                    | Query Params           | Request Body      | Response Body      | Códigos            |
 | ----------- | ---------------------- | ---------------------- | ----------------- | ------------------ | ------------------ |
-| POST        | `/api/payments`        | N/A                    | PaymentRequestDTO | PaymentResponseDTO | 201, 400, 404, 409 |
+| POST        | `/api/payments`        | N/A                    | PaymentRequestDTO | PaymentResponseDTO | 201, 400, 500      |
 | GET         | `/api/payments/{id}`   | N/A                    | N/A               | PaymentResponseDTO | 200, 404           |
 | GET         | `/api/payments`        | N/A                    | N/A               | List<Payment...>   | 200                |
 | GET         | `/api/payments/search` | userId, bookId, status | N/A               | List<Payment...>   | 200                |
 | PATCH       | `/api/payments/{id}`   | N/A                    | PaymentStatusDTO  | PaymentResponseDTO | 200, 400, 404      |
-| DELETE      | `/api/payments/{id}`   | N/A                    | N/A               | Void               | 204, 404, 409      |
+| DELETE      | `/api/payments/{id}`   | N/A                    | N/A               | Void               | 204, 404, 409, 500 |
+
+> **Nota:** un pago creado exitosamente se persiste con estado `COMPLETED`.
 
 ---
 
@@ -146,15 +151,29 @@ Se incluye una **Colección de Postman** y datos de prueba (`data.sql`) cargados
     - Body:
       ```json
       {
-        "userId": 1,
-        "bookId": 1,
-        "quantity": 2
+        "targetMethod": "POST",
+        "queryParams": {},
+        "body": {
+          "userId": 1,
+          "bookId": 1,
+          "quantity": 2
+        }
       }
       ```
-    - **Resultado esperado:** `201 Created`. El stock del libro (ID 1) debería bajar automáticamente de 10 a 8.
+    - **Resultado esperado:** `201 Created` y estado `COMPLETED`. El stock del libro (ID 1) debería bajar automáticamente de 10 a 8.
 
 4.  **Verificar Búsqueda Avanzada:**
-    - Prueba `GET http://localhost:8762/api/books/search?minPrice=20&visible=true` para ver el filtro dinámico en acción.
+    - Prueba `POST http://localhost:8762/api/books/search` usando tunneling:
+      ```json
+      {
+        "targetMethod": "GET",
+        "queryParams": {
+          "minPrice": ["20"],
+          "visible": ["true"]
+        },
+        "body": null
+      }
+      ```
 
 ---
 

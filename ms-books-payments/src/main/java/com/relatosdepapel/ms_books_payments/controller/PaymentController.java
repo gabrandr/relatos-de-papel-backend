@@ -99,11 +99,11 @@ public class PaymentController {
         } catch (IllegalArgumentException e) {
             // Captura validaciones de negocio del servicio (ej: Stock insuficiente)
             return ResponseEntity.badRequest()
-                    .body(new ErrorResponseDTO(400, e.getMessage()));
+                    .body(new ErrorResponseDTO(400, "No fue posible crear el pago"));
         } catch (RuntimeException e) {
             // Captura errores inesperados o de conexión con otros MS
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponseDTO(500, e.getMessage()));
+                    .body(new ErrorResponseDTO(500, "Error interno al procesar la compra"));
         }
     }
 
@@ -115,7 +115,6 @@ public class PaymentController {
      * @param dto Nuevo estado
      * @return 200 OK con el pago actualizado
      *         404 Not Found si no existe
-     *         500 Internal Server Error si falla
      */
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateStatus(
@@ -144,7 +143,8 @@ public class PaymentController {
      * @param id ID del pago a cancelar
      * @return 204 No Content si se canceló correctamente
      *         404 Not Found si el pago no existe
-     *         409 Conflict si ya estaba cancelado / error de stock
+     *         409 Conflict si ya estaba cancelado
+     *         500 Internal Server Error si falla
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> cancel(@PathVariable Long id) {
@@ -166,7 +166,7 @@ public class PaymentController {
         } catch (RuntimeException e) {
             // Error al restaurar stock (inconsistencia grave)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponseDTO(500, e.getMessage()));
+                    .body(new ErrorResponseDTO(500, "No se pudo cancelar el pago"));
         }
     }
 }
