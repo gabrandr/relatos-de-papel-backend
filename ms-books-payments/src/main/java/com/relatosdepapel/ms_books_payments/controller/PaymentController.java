@@ -1,10 +1,12 @@
 package com.relatosdepapel.ms_books_payments.controller;
 
+import com.relatosdepapel.ms_books_payments.dto.ErrorResponseDTO;
 import com.relatosdepapel.ms_books_payments.dto.PaymentRequestDTO;
 import com.relatosdepapel.ms_books_payments.dto.PaymentResponseDTO;
 import com.relatosdepapel.ms_books_payments.dto.PaymentStatusDTO;
 import com.relatosdepapel.ms_books_payments.service.PaymentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -69,11 +71,40 @@ public class PaymentController {
      * @param dto Datos del pago a crear
      * @return 201 Created con el pago creado
      *         400 Bad Request si hay error de validación
+     *         500 Internal Server Error si hay error inesperado
      */
     @PostMapping
-    public ResponseEntity<PaymentResponseDTO> create(@RequestBody PaymentRequestDTO dto) {
-        PaymentResponseDTO createdPayment = paymentService.create(dto);
-        return ResponseEntity.status(201).body(createdPayment);
+    public ResponseEntity<?> create(@RequestBody PaymentRequestDTO dto) {
+        // Validación 1: userId válido
+        if (dto.getUserId() == null || dto.getUserId() <= 0) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponseDTO(400, "userId debe ser mayor a 0"));
+        }
+
+        // Validación 2: bookId válido
+        if (dto.getBookId() == null || dto.getBookId() <= 0) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponseDTO(400, "bookId debe ser mayor a 0"));
+        }
+
+        // Validación 3: quantity válido
+        if (dto.getQuantity() == null || dto.getQuantity() <= 0) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponseDTO(400, "quantity debe ser mayor a 0"));
+        }
+
+        try {
+            PaymentResponseDTO createdPayment = paymentService.create(dto);
+            return ResponseEntity.status(201).body(createdPayment);
+        } catch (IllegalArgumentException e) {
+            // Captura validaciones de negocio del servicio (ej: Stock insuficiente)
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponseDTO(400, e.getMessage()));
+        } catch (RuntimeException e) {
+            // Captura errores inesperados o de conexión con otros MS
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponseDTO(500, e.getMessage()));
+        }
     }
 
     /**
@@ -84,13 +115,25 @@ public class PaymentController {
      * @param dto Nuevo estado
      * @return 200 OK con el pago actualizado
      *         404 Not Found si no existe
+     *         500 Internal Server Error si falla
      */
     @PatchMapping("/{id}")
-    public ResponseEntity<PaymentResponseDTO> updateStatus(
+    public ResponseEntity<?> updateStatus(
             @PathVariable Long id,
             @RequestBody PaymentStatusDTO dto) {
 
+        // Validación básica
+        if (dto.getStatus() == null || dto.getStatus().isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponseDTO(400, "El estado no puede estar vacío"));
+        }
+
+        // El servicio retorna null si no encuentra el pago
         PaymentResponseDTO updatedPayment = paymentService.updateStatus(id, dto);
+
+        if (updatedPayment == null) {
+            return ResponseEntity.notFound().build(); // 404 Not Found
+        }
         return ResponseEntity.ok(updatedPayment); // 200 OK
     }
 
@@ -101,21 +144,29 @@ public class PaymentController {
      * @param id ID del pago a cancelar
      * @return 204 No Content si se canceló correctamente
      *         404 Not Found si el pago no existe
-     *         409 Conflict si ya estaba cancelado
+     *         409 Conflict si ya estaba cancelado / error de stock
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> cancel(@PathVariable Long id) {
-        // Primero verificamos si existe (opcional, pero buena práctica REST)
+    public ResponseEntity<?> cancel(@PathVariable Long id) {
+        // Primero verificamos existencia (opcional, pero buena práctica REST)
         if (paymentService.getById(id) == null) {
             return ResponseEntity.notFound().build(); // 404
         }
-        // Intentamos cancelar llamando al servicio
-        boolean cancelled = paymentService.cancelPayment(id);
-        if (!cancelled) {
-            // Si devuelve false, es porque ya estaba cancelado (o no se pudo)
-            return ResponseEntity.status(409).build(); // 409 Conflict
+
+        try {
+            // El servicio devuelve false si el pago ya estaba cancelado o no existe (aunque
+            // ya validamos existencia arriba)
+            boolean cancelled = paymentService.cancelPayment(id);
+            if (!cancelled) {
+                // Si retorna false, es porque ya estaba cancelado
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(new ErrorResponseDTO(409, "El pago ya se encuentra cancelado"));
+            }
+            return ResponseEntity.noContent().build(); // 204 No Content
+        } catch (RuntimeException e) {
+            // Error al restaurar stock (inconsistencia grave)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponseDTO(500, e.getMessage()));
         }
-        // Si todo salió bien, devolvemos 204 No Content
-        return ResponseEntity.noContent().build();
     }
 }

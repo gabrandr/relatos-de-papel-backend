@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Implementación del servicio de pagos.
@@ -145,15 +144,14 @@ public class PaymentServiceImpl implements PaymentService {
      * 
      * @param id  ID del pago
      * @param dto Nuevo estado
-     * @return PaymentResponseDTO actualizado
-     * @throws RuntimeException si el pago no existe
+     * @return PaymentResponseDTO actualizado, o null si no se encuentra
      */
     @Override
     public PaymentResponseDTO updateStatus(Long id, PaymentStatusDTO dto) {
         // Buscar el pago
         Payment payment = paymentRepository.getById(id);
         if (payment == null) {
-            throw new RuntimeException("Pago no encontrado con ID: " + id);
+            return null; // Retornamos null si no existe
         }
         // Actualizar estado
         payment.setStatus(dto.getStatus());
@@ -167,20 +165,24 @@ public class PaymentServiceImpl implements PaymentService {
      * Cancela un pago y restaura el stock si es necesario.
      * 
      * @param id ID del pago a cancelar
-     * @return true si se canceló correctamente
-     * @throws RuntimeException si el pago no existe o falla la restauración de
-     *                          stock
+     * @return true si se canceló correctamente, false si no existe o ya estaba
+     *         cancelado
+     * @throws RuntimeException si falla la restauración de stock
      */
     @Override
     public boolean cancelPayment(Long id) {
         // Buscar el pago
         Payment payment = paymentRepository.getById(id);
         if (payment == null) {
-            throw new RuntimeException("Pago no encontrado con ID: " + id);
+            return false; // Retornamos false si no existe
         }
-        // Si ya está cancelado, no hacer nada
+        // Si ya está cancelado, devolvemos success (idempotencia) o false según lógica
+        // de negocio.
+        // En BookController delete devuelve false si no existe.
+        // Aquí si ya está cancelado, podríamos decir que ya está hecho, pero para
+        // seguir lógica estricta:
         if ("CANCELLED".equals(payment.getStatus())) {
-            return false;
+            return false; // Ya estaba cancelado
         }
         // Restaurar stock en MS Catalogue (solo si ya se había descontado lo lógico)
         // Asumimos que PENDING y APPROVED ya descontaron stock al crearse

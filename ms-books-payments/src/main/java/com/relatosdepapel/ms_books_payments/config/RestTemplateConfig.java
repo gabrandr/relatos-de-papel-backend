@@ -3,6 +3,7 @@ package com.relatosdepapel.ms_books_payments.config;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -16,14 +17,16 @@ public class RestTemplateConfig {
      * Crea un RestTemplate con balanceo de carga habilitado.
      * 
      * @LoadBalanced hace que Spring use Eureka para resolver nombres de servicio.
-     *               Ejemplo: \"http://MS-BOOKS-CATALOGUE\" se traduce a
-     *               \"http://192.168.1.5:8081\"
+     *               Ejemplo: "http://MS-BOOKS-CATALOGUE" se traduce a
+     *               "http://192.168.1.5:8081"
      * 
      * @return RestTemplate configurado para microservicios
      */
     @Bean // Crea un objeto que Spring puede inyectar en otros componentes
     @LoadBalanced // CLAVE: permite usar nombres Eureka (MS-BOOKS-CATALOGUE)
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+        return restTemplate;
     }
 }
