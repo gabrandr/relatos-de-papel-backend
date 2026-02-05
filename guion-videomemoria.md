@@ -23,7 +23,7 @@ Acciones en pantalla:
 Texto a leer:
 "Hola, somos el equipo [Nombre del equipo]. Esta es la videomemoria de la actividad de backend en Spring.
 
-Empezamos con el entorno limpio, sin componentes desplegados. La arquitectura se basa en dos microservicios: el buscador `ms-books-catalogue` y el operador `ms-books-payments`, cada uno con su propia base de datos relacional. Usamos Eureka para registro y descubrimiento, y Spring Cloud Gateway como punto unico de entrada.
+Empezamos con el entorno limpio, sin componentes desplegados. La arquitectura se basa en dos microservicios: el buscador `ms-books-catalogue` y el operador `ms-books-payments`, cada uno con su propia base de datos relacional. En este proyecto usamos H2 embebida y cargamos datos iniciales con archivos `data.sql` en cada microservicio, de modo que cada servicio arranca su propia base de datos y no comparten el mismo esquema. Usamos Eureka para registro y descubrimiento, y Spring Cloud Gateway como punto unico de entrada.
 
 En esta videomemoria seguiremos el orden exigido por la rubrica: primero explicamos las APIs REST de ambos microservicios, luego desplegamos Eureka, Gateway y microservicios, verificamos el dashboard y el visor de rutas, y finalmente realizamos una prueba end-to-end con Postman."
 
