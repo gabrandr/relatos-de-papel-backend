@@ -1,0 +1,446 @@
+{
+  "info": {
+    "name": "Relatos Gateway CRUD",
+    "description": "Colección de pruebas de sistema vía Gateway para Relatos de Papel. El gateway recibe POST y traduce a targetMethod real.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Books CRUD",
+      "item": [
+        {
+          "name": "1. Listar libros inicial (GET tunneled)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetMethod\": \"GET\",\n  \"queryParams\": {},\n  \"body\": null\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/books",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "books"
+              ]
+            },
+            "description": "Paso 1: obtiene listado inicial de libros mediante targetMethod GET."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Content-Type es JSON', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});",
+                  "",
+                  "pm.test('La respuesta es un arreglo', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Crear libro (POST tunneled)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetMethod\": \"POST\",\n  \"queryParams\": {},\n  \"body\": {\n    \"title\": \"QA Libro {{$timestamp}}\",\n    \"author\": \"QA Automation\",\n    \"publicationDate\": \"2024-01-01\",\n    \"category\": \"Testing\",\n    \"isbn\": \"QA-{{$timestamp}}\",\n    \"price\": {{created_price}},\n    \"stock\": 12,\n    \"rating\": 4,\n    \"visible\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/books",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "books"
+              ]
+            },
+            "description": "Paso 2: crea libro y guarda book_id para pasos siguientes."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Content-Type es JSON', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set('book_id', jsonData.id);",
+                  "",
+                  "pm.test('book_id se guarda correctamente', function () {",
+                  "    pm.expect(Number(pm.environment.get('book_id'))).to.eql(Number(jsonData.id));",
+                  "});",
+                  "",
+                  "pm.test('Campos clave del libro creado son válidos', function () {",
+                  "    pm.expect(jsonData).to.have.property('title');",
+                  "    pm.expect(jsonData).to.have.property('price');",
+                  "    pm.expect(jsonData).to.have.property('stock');",
+                  "    pm.expect(jsonData.title).to.include('QA Libro');",
+                  "    pm.expect(Number(jsonData.price)).to.eql(Number(pm.environment.get('created_price')));",
+                  "    pm.expect(jsonData.stock).to.eql(12);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Obtener libro creado por ID (GET tunneled)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetMethod\": \"GET\",\n  \"queryParams\": {},\n  \"body\": null\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/books/{{book_id}}",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "{{book_id}}"
+              ]
+            },
+            "description": "Paso 3: consulta el libro recién creado usando book_id."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Content-Type es JSON', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('ID, precio y stock coinciden con creación', function () {",
+                  "    pm.expect(Number(jsonData.id)).to.eql(Number(pm.environment.get('book_id')));",
+                  "    pm.expect(Number(jsonData.price)).to.eql(Number(pm.environment.get('created_price')));",
+                  "    pm.expect(jsonData.stock).to.eql(12);",
+                  "    pm.expect(jsonData.title).to.include('QA Libro');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Actualizar libro por ID (PATCH tunneled)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetMethod\": \"PATCH\",\n  \"queryParams\": {},\n  \"body\": {\n    \"price\": {{updated_price}},\n    \"stock\": 7\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/books/{{book_id}}",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "{{book_id}}"
+              ]
+            },
+            "description": "Paso 4: actualización parcial del libro creado."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Content-Type es JSON', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Campos clave actualizados correctamente', function () {",
+                  "    pm.expect(Number(jsonData.id)).to.eql(Number(pm.environment.get('book_id')));",
+                  "    pm.expect(Number(jsonData.price)).to.eql(Number(pm.environment.get('updated_price')));",
+                  "    pm.expect(jsonData.stock).to.eql(7);",
+                  "    pm.expect(jsonData).to.have.property('title');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Obtener libro actualizado por ID (GET tunneled)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetMethod\": \"GET\",\n  \"queryParams\": {},\n  \"body\": null\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/books/{{book_id}}",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "{{book_id}}"
+              ]
+            },
+            "description": "Paso 5: valida persistencia de los cambios del PATCH."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Content-Type es JSON', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('El libro refleja precio y stock actualizados', function () {",
+                  "    pm.expect(Number(jsonData.id)).to.eql(Number(pm.environment.get('book_id')));",
+                  "    pm.expect(Number(jsonData.price)).to.eql(Number(pm.environment.get('updated_price')));",
+                  "    pm.expect(jsonData.stock).to.eql(7);",
+                  "    pm.expect(jsonData.title).to.include('QA Libro');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Eliminar libro por ID (DELETE tunneled)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetMethod\": \"DELETE\",\n  \"queryParams\": {},\n  \"body\": null\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/books/{{book_id}}",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "{{book_id}}"
+              ]
+            },
+            "description": "Paso 6: elimina el libro creado."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code en DELETE es 204 o 200', function () {",
+                  "    pm.expect([204, 200]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Consultar tras delete (no encontrado)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetMethod\": \"GET\",\n  \"queryParams\": {},\n  \"body\": null\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/books/{{book_id}}",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "{{book_id}}"
+              ]
+            },
+            "description": "Paso 7: verificación tolerante post-delete (404 esperado o equivalente según implementación/proxy)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var status = pm.response.code;",
+                  "",
+                  "// Tolerante: algunos gateways/proxies devuelven 404, otros 204 o 200 vacío tras delete.",
+                  "pm.test('Recurso ya no está disponible', function () {",
+                  "    pm.expect([404, 204, 200]).to.include(status);",
+                  "});",
+                  "",
+                  "if (status === 200) {",
+                  "    pm.test('Si responde 200, body debe venir vacío o sin recurso', function () {",
+                  "        var text = pm.response.text().trim();",
+                  "        if (!text) {",
+                  "            pm.expect(text).to.eql('');",
+                  "            return;",
+                  "        }",
+                  "",
+                  "        var parsed = null;",
+                  "        try {",
+                  "            parsed = JSON.parse(text);",
+                  "        } catch (e) {",
+                  "            pm.expect.fail('200 post-delete con body no JSON: ' + text);",
+                  "        }",
+                  "",
+                  "        var hasId = parsed && typeof parsed === 'object' && Object.prototype.hasOwnProperty.call(parsed, 'id');",
+                  "        pm.expect(hasId).to.eql(false);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "8. (Opcional) Crear pago exitoso (POST tunneled)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetMethod\": \"POST\",\n  \"queryParams\": {},\n  \"body\": {\n    \"userId\": 99,\n    \"bookId\": 1,\n    \"quantity\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/payments",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "payments"
+              ]
+            },
+            "description": "Paso 8 opcional: crea pago exitoso usando un libro semilla (bookId=1)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Content-Type es JSON', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Campos clave del pago creado son válidos', function () {",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('bookId');",
+                  "    pm.expect(jsonData).to.have.property('quantity');",
+                  "    pm.expect(jsonData.bookId).to.eql(1);",
+                  "    pm.expect(jsonData.quantity).to.eql(1);",
+                  "    pm.expect(jsonData.status).to.eql('COMPLETED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
